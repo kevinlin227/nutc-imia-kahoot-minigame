@@ -4,7 +4,7 @@ const path = require('path');
 // UUID使用簡單的隨機字符串生成
 
 const app = express();
-const PORT = 8080;
+const PORT = 80;
 
 // 示範題目
 const questions = [
@@ -70,10 +70,19 @@ function getLeaderboard() {
   }));
 }
 
-// 廣播訊息給所有用戶
+// 廣播訊息給所有用戶（包括管理員）
 function broadcast(message, excludeWs = null) {
   wss.clients.forEach(client => {
     if (client !== excludeWs && client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(message));
+    }
+  });
+}
+
+// 廣播訊息給所有管理員
+function broadcastToAdmins(message) {
+  wss.clients.forEach(client => {
+    if (client.isAdmin && client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(message));
     }
   });
@@ -156,6 +165,10 @@ function handleWebSocketMessage(ws, message) {
 
     case 'answer':
       handleUserAnswer(ws, message);
+      break;
+
+    case 'admin_connect':
+      handleAdminConnect(ws, message);
       break;
 
     case 'admin_start_game':
@@ -262,6 +275,28 @@ function handleUserReconnect(ws, message) {
   });
 
   console.log(`用戶 ${user.name} (${user.id}) 已重連`);
+}
+
+// 處理管理員連接
+function handleAdminConnect(ws, message) {
+  // 標記這個WebSocket為管理員連接
+  ws.isAdmin = true;
+
+  // 發送當前遊戲狀態
+  ws.send(JSON.stringify({
+    type: 'admin_connected',
+    gameStatus: gameState.status,
+    currentQuestion: gameState.currentQuestion,
+    showingResults: gameState.showingResults,
+    users: Array.from(gameState.users.values()).map(u => ({
+      id: u.id,
+      name: u.name,
+      connected: u.connected,
+      score: u.score
+    }))
+  }));
+
+  console.log('管理員已連接');
 }
 
 // 處理用戶答題

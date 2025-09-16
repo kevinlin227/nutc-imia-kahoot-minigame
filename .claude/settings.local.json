@@ -3,7 +3,11 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(node server.js)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(wmic process where:*)"
     ],
     "deny": [],
     "ask": []

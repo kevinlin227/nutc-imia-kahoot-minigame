@@ -264,8 +264,8 @@
             // 設置WebSocket事件處理
             ws.onopen = () => {
                 addLog('已連接到遊戲伺服器', 'info');
-                // 不需要加入遊戲，只是監聽狀態
-                requestGameState();
+                // 發送管理員連接請求
+                ws.send({ type: 'admin_connect' });
             };
 
             ws.onclose = () => {
@@ -277,6 +277,7 @@
             };
 
             // 註冊訊息處理器
+            ws.on('admin_connected', handleAdminConnected);
             ws.on('users_update', handleUsersUpdate);
             ws.on('game_starting', handleGameStarting);
             ws.on('question_start', handleQuestionStart);
@@ -294,11 +295,6 @@
             setInterval(refreshData, 5000);
         }
 
-        // 請求遊戲狀態（由於我們是管理後台，需要特殊處理）
-        function requestGameState() {
-            // 這裡可以發送特殊的管理員請求
-            // 但為了簡化，我們使用現有的訊息監聽
-        }
 
         // 載入題目預覽
         function loadQuestionsPreview() {
@@ -345,6 +341,22 @@
 
                 container.appendChild(questionElement);
             });
+        }
+
+        // 處理管理員連接成功
+        function handleAdminConnected(message) {
+            adminState.gameStatus = message.gameStatus;
+            adminState.currentQuestion = message.currentQuestion;
+            adminState.users = message.users;
+
+            // 更新所有顯示
+            updateGameStatus();
+            updateCurrentQuestion();
+            updatePlayerCount();
+            updateUsersDisplay();
+            updateControlButtons();
+
+            addLog('管理員連接成功，已同步遊戲狀態', 'info');
         }
 
         // 處理用戶列表更新

@@ -12,13 +12,13 @@ npm install
 npm start
 ```
 
-伺服器啟動後，訪問 http://localhost:8080 開始遊戲。
+伺服器啟動後，訪問 http://localhost:3000 開始遊戲。
 
 ## 頁面導航
 
-- **主頁**: http://localhost:8080 - 輸入名字加入遊戲
-- **遊戲頁**: http://localhost:8080/game - 遊戲進行頁面
-- **後台管理**: http://localhost:8080/admin - 管理員控制台
+- **主頁**: http://localhost:3000 - 輸入名字加入遊戲
+- **遊戲頁**: http://localhost:3000/game - 遊戲進行頁面
+- **後台管理**: http://localhost:3000/admin - 管理員控制台
 
 ## 遊戲流程
 
@@ -52,4 +52,4 @@ npm start
 
 ---
 
-🎯 **現在就開始遊戲吧！** 在瀏覽器中打開 http://localhost:8080
+🎯 **現在就開始遊戲吧！** 在瀏覽器中打開 http://localhost:3000

@@ -301,9 +301,9 @@ npm start
 ```
 
 伺服器啟動後，訪問以下網址：
-- 主頁：http://localhost:8080
-- 遊戲頁面：http://localhost:8080/game
-- 後台管理：http://localhost:8080/admin
+- 主頁：http://localhost:3000
+- 遊戲頁面：http://localhost:3000/game
+- 後台管理：http://localhost:3000/admin
 
 ### 生產環境
 - 使用PM2或類似工具管理進程
@@ -328,11 +328,11 @@ npm start
 
 ### 啟動遊戲
 1. 在命令行執行 `npm start` 啟動伺服器
-2. 打開瀏覽器訪問 http://localhost:8080
+2. 打開瀏覽器訪問 http://localhost:3000
 3. 輸入玩家名稱，點擊"開始遊戲"進入等待頁面
 
 ### 管理遊戲
-1. 打開 http://localhost:8080/admin 進入後台管理
+1. 打開 http://localhost:3000/admin 進入後台管理
 2. 等待玩家加入後，點擊"開始遊戲"
 3. 題目開始後，等待玩家作答（10秒限時）
 4. 點擊"顯示結果"查看答案和分數
