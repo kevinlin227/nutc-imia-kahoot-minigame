@@ -117,6 +117,7 @@
             currentScreen: 'waiting',
             userId: null,
             questions: [],
+            totalQuestions: 0,
             currentQuestion: 0,
             selectedAnswer: null,
             questionStartTime: null,
@@ -195,6 +196,7 @@
         function handleConnected(message) {
             gameState.userId = message.userId;
             gameState.questions = message.questions;
+            gameState.totalQuestions = message.totalQuestions;
 
             showNotification('成功加入遊戲！', 'success');
         }
@@ -202,6 +204,7 @@
         // 處理重連成功
         function handleReconnected(message) {
             gameState.userId = message.userId;
+            gameState.totalQuestions = message.totalQuestions;
 
             // 根據當前遊戲狀態切換畫面
             if (message.gameStatus === 'playing') {
@@ -267,7 +270,7 @@
             const question = gameState.questions[questionIndex];
 
             document.getElementById('questionCounter').textContent =
-                `第 ${questionIndex + 1} 題 / 共 ${gameState.questions.length} 題`;
+                `第 ${questionIndex + 1} 題 / 共 ${gameState.totalQuestions} 題`;
 
             document.getElementById('questionText').textContent = question.question;
 

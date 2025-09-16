@@ -1,67 +1,22 @@
 const express = require('express');
 const WebSocket = require('ws');
 const path = require('path');
+const fs = require('fs');
 // UUID使用簡單的隨機字符串生成
 
 const app = express();
 const PORT = 80;
 
-const questions = [
-  {
-    question: "臺中科大「資訊管理系」屬於哪一個學院？",
-    options: ["商學院", "設計學院", "語文學院", "智慧產業學院"],
-    correctAnswer: 0,
-    timeLimit: 10000
-  },
-  {
-    question: "下列哪一項最不可能出現在資管課程裡？",
-    options: ["ERP", "CRM", "SCM", "KFC"],
-    correctAnswer: 3,
-    timeLimit: 10000
-  },
-  {
-    question: "資管系的「資」指的是什麼？",
-    options: ["資訊", "資金", "資優", "資敵（資深敵人？）"],
-    correctAnswer: 0,
-    timeLimit: 10000
-  },
-  {
-    question: "台灣最近加強保護什麼重要設施？",
-    options: ["海底電纜", "海底寶藏", "海底餐廳", "海底總動員"],
-    correctAnswer: 0,
-    timeLimit: 10000
-  },
-  {
-    question: "TSMC(台積電) 最近發生什麼事？",
-    options: ["機密差點被偷走", "晶片變成餅乾", "老闆去開演唱會", "工廠變遊樂園"],
-    correctAnswer: 0,
-    timeLimit: 10000
-  },
-  {
-    question: "AI 用得越多，什麼東西會不夠用？",
-    options: ["硬碟空間", "教室桌椅", "飯堂餐盒", "新生制服"],
-    correctAnswer: 0,
-    timeLimit: 10000
-  },
-  {
-    question: "「晶片外交」是什麼意思？",
-    options: ["用晶片交朋友", "用晶片打遊戲", "晶片做成飾品", "晶片當早餐"],
-    correctAnswer: 0,
-    timeLimit: 10000
-  },
-  {
-    question: "資管系主任的名字是？",
-    options: ["范冰冰", "姜琇森", "王建民", "周杰倫"],
-    correctAnswer: 1,
-    timeLimit: 10000
-  },
-  {
-    question: "如果有人問「資管到底在學什麼？」最正確的答案是？",
-    options: ["電腦相關啦", "打 LOL", "打麻將", "打瞌睡"],
-    correctAnswer: 0,
-    timeLimit: 10000
-  }
-];
+// 從JSON文件載入題目
+let questions = [];
+try {
+  const questionsData = fs.readFileSync(path.join(__dirname, 'questions.json'), 'utf8');
+  questions = JSON.parse(questionsData);
+  console.log(`成功載入 ${questions.length} 道題目`);
+} catch (error) {
+  console.error('載入題目失敗:', error);
+  process.exit(1);
+}
 
 // 遊戲狀態
 const gameState = {
@@ -253,6 +208,7 @@ function handleUserJoin(ws, message) {
     type: 'connected',
     userId: userId,
     gameStatus: gameState.status,
+    totalQuestions: questions.length,
     questions: questions.map(q => ({
       question: q.question,
       options: q.options,
@@ -295,7 +251,8 @@ function handleUserReconnect(ws, message) {
     gameStatus: gameState.status,
     currentQuestion: gameState.currentQuestion,
     score: user.score,
-    showingResults: gameState.showingResults
+    showingResults: gameState.showingResults,
+    totalQuestions: questions.length
   }));
 
   // 廣播用戶列表更新
@@ -323,6 +280,7 @@ function handleAdminConnect(ws, message) {
     gameStatus: gameState.status,
     currentQuestion: gameState.currentQuestion,
     showingResults: gameState.showingResults,
+    totalQuestions: questions.length,
     users: Array.from(gameState.users.values()).map(u => ({
       id: u.id,
       name: u.name,
