@@ -416,14 +416,17 @@ function handleShowResults() {
       return aAnswer.timeSpent - bAnswer.timeSpent;
     });
 
-  // 給答對的用戶計分
-  answeredUsers.forEach((user, index) => {
+  // 給答對的用戶計分 - 只計算答對用戶的排名
+  const correctUsers = answeredUsers.filter(user => {
     const answer = user.answers.find(a => a.questionIndex === gameState.currentQuestion);
-    if (answer.correct) {
-      const rank = index + 1;
-      const score = calculateScore(true, answer.timeSpent, rank);
-      user.score += score;
-    }
+    return answer && answer.correct;
+  });
+
+  correctUsers.forEach((user, index) => {
+    const answer = user.answers.find(a => a.questionIndex === gameState.currentQuestion);
+    const rank = index + 1; // 在答對用戶中的排名
+    const score = calculateScore(true, answer.timeSpent, rank);
+    user.score += score;
   });
 
   // 發送結果給每個用戶
@@ -442,6 +445,11 @@ function handleShowResults() {
         updatedLeaderboard[userRank.rank - 2].score - user.score : 0,
       leaderboard: updatedLeaderboard
     });
+  });
+
+  // 廣播給管理員狀態更新
+  broadcastToAdmins({
+    type: 'show_results'
   });
 
   console.log(`顯示第 ${gameState.currentQuestion + 1} 題結果`);
