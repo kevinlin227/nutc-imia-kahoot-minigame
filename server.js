@@ -25,7 +25,8 @@ const gameState = {
   questionStartTime: null,
   showingResults: false,
   users: new Map(),
-  allowNewUsers: true
+  allowNewUsers: true,
+  timeoutUsers: new Set() // 記錄超時的用戶
 };
 
 // 生成用戶ID
@@ -155,6 +156,10 @@ function handleWebSocketMessage(ws, message) {
 
     case 'answer':
       handleUserAnswer(ws, message);
+      break;
+
+    case 'timeout':
+      handleUserTimeout(ws, message);
       break;
 
     case 'admin_connect':
@@ -370,6 +375,9 @@ function startQuestion(questionIndex) {
   gameState.questionStartTime = Date.now();
   gameState.showingResults = false;
 
+  // 清除上一題的超時記錄
+  gameState.timeoutUsers.clear();
+
   const question = questions[questionIndex];
 
   broadcast({
@@ -379,21 +387,28 @@ function startQuestion(questionIndex) {
       options: question.options,
       timeLimit: question.timeLimit
     },
-    questionIndex: questionIndex,
-    startTime: gameState.questionStartTime
+    questionIndex: questionIndex
   });
 
-  // 向管理員發送題目開始通知，包含倒計時信息
+  // 向管理員發送題目開始通知
   broadcastToAdmins({
     type: 'admin_question_start',
     questionIndex: questionIndex,
     question: question,
-    startTime: gameState.questionStartTime,
     timeLimit: question.timeLimit
   });
 
-  // 啟動服務器端倒計時更新
-  startServerCountdown(questionIndex, question.timeLimit);
+  // 啟動管理員統計更新
+  startStatsUpdater(questionIndex);
+
+  // 初始統計
+  setTimeout(() => {
+    broadcastToAdmins({
+      type: 'answer_stats',
+      questionIndex: questionIndex,
+      stats: getAnswerStats(questionIndex)
+    });
+  }, 500);
 
   console.log(`開始第 ${questionIndex + 1} 題`);
 }
@@ -502,14 +517,62 @@ function handleEndGame() {
   console.log('遊戲結束');
 }
 
+// 處理用戶超時
+function handleUserTimeout(ws, message) {
+  const userId = findUserIdByWebSocket(ws);
+  const user = gameState.users.get(userId);
+
+  if (!user || gameState.status !== 'playing') {
+    return;
+  }
+
+  // 檢查是否已經回答過這題
+  const existingAnswer = user.answers.find(a => a.questionIndex === message.questionIndex);
+  if (existingAnswer) {
+    return;
+  }
+
+  // 記錄超時用戶
+  gameState.timeoutUsers.add(userId);
+
+  // 向管理員發送作答統計更新
+  broadcastToAdmins({
+    type: 'answer_stats',
+    questionIndex: message.questionIndex,
+    stats: getAnswerStats(message.questionIndex)
+  });
+
+  console.log(`用戶 ${user.name} 第 ${message.questionIndex + 1} 題超時`);
+}
+
+// 定期更新管理員頁面統計（由於客戶端計時，每2秒更新一次）
+function startStatsUpdater(questionIndex) {
+  const statsInterval = setInterval(() => {
+    if (gameState.currentQuestion !== questionIndex || gameState.showingResults) {
+      clearInterval(statsInterval);
+      return;
+    }
+
+    broadcastToAdmins({
+      type: 'answer_stats',
+      questionIndex: questionIndex,
+      stats: getAnswerStats(questionIndex)
+    });
+  }, 2000);
+
+  return statsInterval;
+}
+
 // 獲取作答統計
 function getAnswerStats(questionIndex) {
   const totalUsers = gameState.users.size;
   const answeredUsers = Array.from(gameState.users.values())
     .filter(user => user.answers.find(a => a.questionIndex === questionIndex));
 
+  const timeoutCount = gameState.timeoutUsers.size;
+  const pendingCount = totalUsers - answeredUsers.length - timeoutCount;
+
   const answerCounts = [0, 0, 0, 0]; // 4個選項的計數
-  const unansweredCount = totalUsers - answeredUsers.length;
 
   answeredUsers.forEach(user => {
     const answer = user.answers.find(a => a.questionIndex === questionIndex);
@@ -521,12 +584,14 @@ function getAnswerStats(questionIndex) {
   return {
     totalUsers,
     answeredCount: answeredUsers.length,
-    unansweredCount,
+    timeoutCount,
+    pendingCount,
     answerCounts,
     answerPercentages: answerCounts.map(count =>
       totalUsers > 0 ? Math.round((count / totalUsers) * 100) : 0
     ),
-    unansweredPercentage: totalUsers > 0 ? Math.round((unansweredCount / totalUsers) * 100) : 0
+    timeoutPercentage: totalUsers > 0 ? Math.round((timeoutCount / totalUsers) * 100) : 0,
+    pendingPercentage: totalUsers > 0 ? Math.round((pendingCount / totalUsers) * 100) : 0
   };
 }
 
@@ -540,46 +605,6 @@ function findUserIdByWebSocket(ws) {
   return null;
 }
 
-// 啟動服務器端倒計時
-function startServerCountdown(questionIndex, timeLimit) {
-  const startTime = Date.now();
-
-  // 每秒廣播剩餘時間
-  const countdownInterval = setInterval(() => {
-    const elapsed = Date.now() - startTime;
-    const remaining = Math.max(0, Math.ceil((timeLimit - elapsed) / 1000));
-
-    // 廣播倒計時更新
-    broadcast({
-      type: 'countdown_update',
-      remaining: remaining,
-      questionIndex: questionIndex
-    });
-
-    broadcastToAdmins({
-      type: 'admin_countdown_update',
-      remaining: remaining,
-      questionIndex: questionIndex
-    });
-
-    // 如果時間到了，停止倒計時
-    if (remaining <= 0) {
-      clearInterval(countdownInterval);
-
-      // 發送時間結束通知
-      broadcast({
-        type: 'time_up',
-        questionIndex: questionIndex
-      });
-
-      broadcastToAdmins({
-        type: 'admin_time_up',
-        questionIndex: questionIndex,
-        stats: getAnswerStats(questionIndex)
-      });
-    }
-  }, 1000);
-}
 
 // 定期清理離線用戶（可選）
 setInterval(() => {

@@ -682,14 +682,23 @@
                     </div>
                 </div>
                 <div class="answer-option">
-                    <div class="option-label">未答:</div>
+                    <div class="option-label">等待中:</div>
                     <div class="option-bar">
-                        <div class="option-fill" style="width: 100%; background: #6c757d;">100% (0)</div>
+                        <div class="option-fill" style="width: 100%; background: #ffc107;">100% (0)</div>
+                    </div>
+                </div>
+                <div class="answer-option">
+                    <div class="option-label">超時:</div>
+                    <div class="option-bar">
+                        <div class="option-fill" style="width: 0%; background: #6c757d;">0% (0)</div>
                     </div>
                 </div>
                 <div class="response-summary">
                     <div class="response-count">0/0</div>
                     <div>已作答人數</div>
+                    <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                        等待中: 0 | 超時: 0
+                    </div>
                 </div>
             `;
         }
@@ -718,14 +727,28 @@
                 `;
             });
 
-            // 添加未作答統計
-            if (stats.unansweredCount > 0) {
+            // 添加等待中統計
+            if (stats.pendingCount > 0) {
                 html += `
                     <div class="answer-option">
-                        <div class="option-label">未答:</div>
+                        <div class="option-label">等待中:</div>
                         <div class="option-bar">
-                            <div class="option-fill" style="width: ${stats.unansweredPercentage}%; background: #6c757d;">
-                                ${stats.unansweredPercentage}% (${stats.unansweredCount})
+                            <div class="option-fill" style="width: ${stats.pendingPercentage}%; background: #ffc107;">
+                                ${stats.pendingPercentage}% (${stats.pendingCount})
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 添加超時統計
+            if (stats.timeoutCount > 0) {
+                html += `
+                    <div class="answer-option">
+                        <div class="option-label">超時:</div>
+                        <div class="option-bar">
+                            <div class="option-fill" style="width: ${stats.timeoutPercentage}%; background: #6c757d;">
+                                ${stats.timeoutPercentage}% (${stats.timeoutCount})
                             </div>
                         </div>
                     </div>
@@ -736,6 +759,9 @@
                 <div class="response-summary">
                     <div class="response-count">${stats.answeredCount}/${stats.totalUsers}</div>
                     <div>已作答人數</div>
+                    <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                        等待中: ${stats.pendingCount || 0} | 超時: ${stats.timeoutCount || 0}
+                    </div>
                 </div>
             `;
 

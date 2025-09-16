@@ -121,7 +121,8 @@
             currentQuestion: 0,
             selectedAnswer: null,
             questionStartTime: null,
-            timers: []
+            timers: [],
+            localTimers: [] // 客戶端計時器
         };
 
         // WebSocket連接
@@ -139,10 +140,14 @@
 
         // 初始化
         function init() {
+            console.log('遊戲頁面初始化開始');
             const urlParams = new URLSearchParams(window.location.search);
             const playerName = urlParams.get('name') || localStorage.getItem('playerName');
 
+            console.log('玩家名稱:', playerName);
+
             if (!playerName) {
+                console.log('沒有玩家名稱，重定向到主頁');
                 window.location.href = '/home';
                 return;
             }
@@ -151,6 +156,7 @@
 
             // 設置WebSocket事件處理
             ws.onopen = () => {
+                console.log('WebSocket連接成功，發送加入請求');
                 updateConnectionStatus(true);
                 ws.send({
                     type: 'join',
@@ -171,10 +177,9 @@
             ws.on('show_results', handleShowResults);
             ws.on('next_question_countdown', handleNextQuestionCountdown);
             ws.on('game_end', handleGameEnd);
-            ws.on('countdown_update', handleCountdownUpdate);
-            ws.on('time_up', handleTimeUp);
 
             // 連接WebSocket
+            console.log('準備連接WebSocket');
             ws.connect();
         }
 
@@ -244,25 +249,28 @@
             });
         }
 
-        // 處理遊戲開始倒計時
+        // 處理遊戲開始倒計時（客戶端實現）
         function handleGameStarting(message) {
             switchScreen('startCountdown');
 
             const countdownElement = document.getElementById('startCountdown');
-            startCountdown(countdownElement, message.countdown, () => {
+            // 使用客戶端倒計時，3秒固定
+            startClientCountdown(countdownElement, 3, () => {
                 // 倒計時結束後等待第一題
+                console.log('遊戲開始倒計時完成，等待第一題');
             });
         }
 
         // 處理題目開始
         function handleQuestionStart(message) {
             gameState.currentQuestion = message.questionIndex;
-            gameState.questionStartTime = message.startTime || Date.now();
+            gameState.questionStartTime = Date.now(); // 使用本地時間
             gameState.selectedAnswer = null;
 
             switchScreen('game');
             loadQuestion(message.questionIndex);
-            initQuestionTimer(message.question.timeLimit);
+            // 使用客戶端10秒計時器
+            startQuestionTimer(10);
         }
 
         // 載入題目
@@ -311,45 +319,65 @@
             });
         }
 
-        // 處理服務器倒計時更新
-        function handleCountdownUpdate(message) {
-            if (message.questionIndex === gameState.currentQuestion) {
-                const timerElement = document.getElementById('gameTimer');
-                timerElement.textContent = message.remaining;
+        // 客戶端通用倒計時函數
+        function startClientCountdown(element, seconds, onComplete) {
+            element.textContent = seconds;
 
-                // 時間快用完時的視覺效果
-                if (message.remaining <= 3) {
-                    timerElement.style.color = '#dc3545';
-                    timerElement.style.animation = 'pulse 0.5s infinite';
+            const timer = setInterval(() => {
+                seconds--;
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                    onComplete && onComplete();
                 } else {
-                    timerElement.style.color = '';
-                    timerElement.style.animation = '';
+                    element.textContent = seconds;
                 }
-            }
+            }, 1000);
+
+            gameState.localTimers.push(timer);
+            return timer;
         }
 
-        // 處理時間到了
-        function handleTimeUp(message) {
-            if (message.questionIndex === gameState.currentQuestion) {
-                const timerElement = document.getElementById('gameTimer');
-                timerElement.textContent = '時間到!';
-                timerElement.style.color = '#dc3545';
-
-                // 如果還沒選擇，禁用選項
-                if (gameState.selectedAnswer === null) {
-                    document.getElementById('answerIndicator').textContent = '時間到！等待結果...';
-                    const options = document.querySelectorAll('.option');
-                    options.forEach(option => option.style.pointerEvents = 'none');
-                }
-            }
-        }
-
-        // 初始化題目計時器顯示（由服務器控制）
-        function initQuestionTimer(duration) {
+        // 客戶端題目計時器
+        function startQuestionTimer(duration) {
             const timerElement = document.getElementById('gameTimer');
-            timerElement.textContent = Math.ceil(duration / 1000);
+            timerElement.textContent = duration;
             timerElement.style.color = '';
             timerElement.style.animation = '';
+
+            let remaining = duration;
+
+            const timer = setInterval(() => {
+                remaining--;
+                timerElement.textContent = remaining;
+
+                // 時間快用完時的視覺效果
+                if (remaining <= 3) {
+                    timerElement.style.color = '#dc3545';
+                    timerElement.style.animation = 'pulse 0.5s infinite';
+                }
+
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    timerElement.textContent = '時間到!';
+                    timerElement.style.color = '#dc3545';
+
+                    // 如果還沒選擇，自動提交未作答並禁用選項
+                    if (gameState.selectedAnswer === null) {
+                        document.getElementById('answerIndicator').textContent = '時間到！等待結果...';
+                        const options = document.querySelectorAll('.option');
+                        options.forEach(option => option.style.pointerEvents = 'none');
+
+                            // 發送超時信號到伺服器
+                        ws.send({
+                            type: 'timeout',
+                            questionIndex: gameState.currentQuestion
+                        });
+                    }
+                }
+            }, 1000);
+
+            gameState.localTimers.push(timer);
+            return timer;
         }
 
         // 處理結果顯示
@@ -417,13 +445,15 @@
             });
         }
 
-        // 處理下一題倒計時
+        // 處理下一題倒計時（客戶端實現）
         function handleNextQuestionCountdown(message) {
             switchScreen('nextQuestion');
 
             const countdownElement = document.getElementById('nextCountdown');
-            startCountdown(countdownElement, message.countdown, () => {
+            // 使用客戶端倒計時，3秒固定
+            startClientCountdown(countdownElement, 3, () => {
                 // 倒計時結束後等待下一題
+                console.log('下一題倒計時完成');
             });
         }
 
@@ -473,6 +503,8 @@
         function clearAllTimers() {
             gameState.timers.forEach(timer => clearInterval(timer));
             gameState.timers = [];
+            gameState.localTimers.forEach(timer => clearInterval(timer));
+            gameState.localTimers = [];
         }
 
         // 再玩一次
