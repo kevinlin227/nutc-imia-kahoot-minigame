@@ -4,7 +4,7 @@ const path = require('path');
 // UUID使用簡單的隨機字符串生成
 
 const app = express();
-const PORT = 80;
+const PORT = 8080;
 
 // 示範題目
 const questions = [
