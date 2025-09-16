@@ -366,6 +366,13 @@ function handleUserAnswer(ws, message) {
   user.answers.push(answerRecord);
   user.totalTime += message.timeSpent;
 
+  // 向管理員發送即時作答統計
+  broadcastToAdmins({
+    type: 'answer_stats',
+    questionIndex: message.questionIndex,
+    stats: getAnswerStats(message.questionIndex)
+  });
+
   console.log(`用戶 ${user.name} 回答第 ${message.questionIndex + 1} 題: ${message.answer} (${isCorrect ? '正確' : '錯誤'})`);
 }
 
@@ -382,6 +389,12 @@ function handleStartGame() {
   // 發送遊戲開始倒計時
   broadcast({
     type: 'game_starting',
+    countdown: 3
+  });
+
+  // 向管理員發送遊戲開始倒計時
+  broadcastToAdmins({
+    type: 'admin_game_starting',
     countdown: 3
   });
 
@@ -411,6 +424,15 @@ function startQuestion(questionIndex) {
     questionIndex: questionIndex
   });
 
+  // 向管理員發送題目開始通知，包含倒計時信息
+  broadcastToAdmins({
+    type: 'admin_question_start',
+    questionIndex: questionIndex,
+    question: question,
+    startTime: gameState.questionStartTime,
+    timeLimit: question.timeLimit
+  });
+
   console.log(`開始第 ${questionIndex + 1} 題`);
 }
 
@@ -426,6 +448,12 @@ function handleNextQuestion() {
   // 發送下一題倒計時
   broadcast({
     type: 'next_question_countdown',
+    countdown: 3
+  });
+
+  // 向管理員發送下一題倒計時
+  broadcastToAdmins({
+    type: 'admin_next_question_countdown',
     countdown: 3
   });
 
@@ -510,6 +538,31 @@ function handleEndGame() {
   });
 
   console.log('遊戲結束');
+}
+
+// 獲取作答統計
+function getAnswerStats(questionIndex) {
+  const totalUsers = gameState.users.size;
+  const answeredUsers = Array.from(gameState.users.values())
+    .filter(user => user.answers.find(a => a.questionIndex === questionIndex));
+
+  const answerCounts = [0, 0, 0, 0]; // 4個選項的計數
+
+  answeredUsers.forEach(user => {
+    const answer = user.answers.find(a => a.questionIndex === questionIndex);
+    if (answer && answer.answer >= 0 && answer.answer < 4) {
+      answerCounts[answer.answer]++;
+    }
+  });
+
+  return {
+    totalUsers,
+    answeredCount: answeredUsers.length,
+    answerCounts,
+    answerPercentages: answerCounts.map(count =>
+      answeredUsers.length > 0 ? Math.round((count / answeredUsers.length) * 100) : 0
+    )
+  };
 }
 
 // 根據WebSocket找用戶ID

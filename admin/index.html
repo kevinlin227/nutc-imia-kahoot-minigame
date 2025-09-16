@@ -126,6 +126,89 @@
             color: #333;
         }
 
+        .monitoring-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .countdown-display {
+            background: #667eea;
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+            display: none;
+        }
+
+        .countdown-display.active {
+            display: block;
+        }
+
+        .answer-stats {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .answer-option {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .option-label {
+            width: 60px;
+            font-weight: bold;
+        }
+
+        .option-bar {
+            flex: 1;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            margin: 0 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-fill {
+            height: 100%;
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .option-fill.option-a { background: #e74c3c; }
+        .option-fill.option-b { background: #3498db; }
+        .option-fill.option-c { background: #f39c12; }
+        .option-fill.option-d { background: #27ae60; }
+
+        .response-summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .response-count {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
         .log-entry {
             margin: 5px 0;
             padding: 5px;
@@ -157,12 +240,21 @@
                 grid-template-columns: 1fr;
             }
 
+            .monitoring-panel {
+                grid-template-columns: 1fr;
+            }
+
             .control-buttons {
                 flex-direction: column;
             }
 
             .control-buttons button {
                 min-width: auto;
+            }
+
+            .countdown-display {
+                font-size: 1.5em;
+                padding: 20px;
             }
         }
     </style>
@@ -185,6 +277,30 @@
                 <div class="status-card">
                     <h3>當前題目</h3>
                     <div id="currentQuestion" class="value">-</div>
+                </div>
+            </div>
+
+            <!-- 即時監控面板 -->
+            <div class="monitoring-panel">
+                <!-- 倒計時顯示 -->
+                <div>
+                    <div id="gameCountdown" class="countdown-display">
+                        遊戲開始倒計時: <span id="gameCountdownValue">3</span>
+                    </div>
+                    <div id="questionCountdown" class="countdown-display">
+                        題目倒計時: <span id="questionCountdownValue">10</span>
+                    </div>
+                    <div id="nextQuestionCountdown" class="countdown-display">
+                        下一題倒計時: <span id="nextQuestionCountdownValue">3</span>
+                    </div>
+                </div>
+
+                <!-- 作答統計 -->
+                <div class="answer-stats">
+                    <h3>即時作答統計</h3>
+                    <div id="answerStatsContent">
+                        <p style="text-align: center; color: #666;">等待題目開始...</p>
+                    </div>
                 </div>
             </div>
 
@@ -284,6 +400,10 @@
             ws.on('show_results', handleShowResults);
             ws.on('next_question_countdown', handleNextQuestionCountdown);
             ws.on('game_end', handleGameEnd);
+            ws.on('admin_game_starting', handleAdminGameStarting);
+            ws.on('admin_question_start', handleAdminQuestionStart);
+            ws.on('admin_next_question_countdown', handleAdminNextQuestionCountdown);
+            ws.on('answer_stats', handleAnswerStats);
 
             // 連接WebSocket
             ws.connect();
@@ -403,7 +523,171 @@
             adminState.gameStatus = 'finished';
             updateGameStatus();
             updateControlButtons();
+            hideAllCountdowns();
             addLog('遊戲結束', 'info');
+        }
+
+        // 處理管理員遊戲開始倒計時
+        function handleAdminGameStarting(message) {
+            showGameCountdown(message.countdown);
+        }
+
+        // 處理管理員題目開始
+        function handleAdminQuestionStart(message) {
+            hideAllCountdowns();
+            showQuestionCountdown(message.timeLimit / 1000);
+            resetAnswerStats();
+            addLog(`第 ${message.questionIndex + 1} 題: ${message.question.question}`, 'info');
+        }
+
+        // 處理管理員下一題倒計時
+        function handleAdminNextQuestionCountdown(message) {
+            hideAllCountdowns();
+            showNextQuestionCountdown(message.countdown);
+        }
+
+        // 處理作答統計更新
+        function handleAnswerStats(message) {
+            updateAnswerStats(message.stats);
+        }
+
+        // 顯示遊戲開始倒計時
+        function showGameCountdown(seconds) {
+            hideAllCountdowns();
+            const countdown = document.getElementById('gameCountdown');
+            const valueElement = document.getElementById('gameCountdownValue');
+
+            countdown.classList.add('active');
+            valueElement.textContent = seconds;
+
+            const interval = setInterval(() => {
+                seconds--;
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    countdown.classList.remove('active');
+                } else {
+                    valueElement.textContent = seconds;
+                }
+            }, 1000);
+        }
+
+        // 顯示題目倒計時
+        function showQuestionCountdown(seconds) {
+            hideAllCountdowns();
+            const countdown = document.getElementById('questionCountdown');
+            const valueElement = document.getElementById('questionCountdownValue');
+
+            countdown.classList.add('active');
+            valueElement.textContent = seconds;
+
+            const interval = setInterval(() => {
+                seconds--;
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    valueElement.textContent = '時間到!';
+                    setTimeout(() => {
+                        countdown.classList.remove('active');
+                    }, 2000);
+                } else {
+                    valueElement.textContent = seconds;
+                }
+            }, 1000);
+        }
+
+        // 顯示下一題倒計時
+        function showNextQuestionCountdown(seconds) {
+            hideAllCountdowns();
+            const countdown = document.getElementById('nextQuestionCountdown');
+            const valueElement = document.getElementById('nextQuestionCountdownValue');
+
+            countdown.classList.add('active');
+            valueElement.textContent = seconds;
+
+            const interval = setInterval(() => {
+                seconds--;
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    countdown.classList.remove('active');
+                } else {
+                    valueElement.textContent = seconds;
+                }
+            }, 1000);
+        }
+
+        // 隱藏所有倒計時
+        function hideAllCountdowns() {
+            document.getElementById('gameCountdown').classList.remove('active');
+            document.getElementById('questionCountdown').classList.remove('active');
+            document.getElementById('nextQuestionCountdown').classList.remove('active');
+        }
+
+        // 重置作答統計
+        function resetAnswerStats() {
+            const content = document.getElementById('answerStatsContent');
+            content.innerHTML = `
+                <div class="answer-option">
+                    <div class="option-label">A:</div>
+                    <div class="option-bar">
+                        <div class="option-fill option-a" style="width: 0%">0%</div>
+                    </div>
+                </div>
+                <div class="answer-option">
+                    <div class="option-label">B:</div>
+                    <div class="option-bar">
+                        <div class="option-fill option-b" style="width: 0%">0%</div>
+                    </div>
+                </div>
+                <div class="answer-option">
+                    <div class="option-label">C:</div>
+                    <div class="option-bar">
+                        <div class="option-fill option-c" style="width: 0%">0%</div>
+                    </div>
+                </div>
+                <div class="answer-option">
+                    <div class="option-label">D:</div>
+                    <div class="option-bar">
+                        <div class="option-fill option-d" style="width: 0%">0%</div>
+                    </div>
+                </div>
+                <div class="response-summary">
+                    <div class="response-count">0/0</div>
+                    <div>已作答人數</div>
+                </div>
+            `;
+        }
+
+        // 更新作答統計
+        function updateAnswerStats(stats) {
+            const content = document.getElementById('answerStatsContent');
+            const options = ['A', 'B', 'C', 'D'];
+            const colors = ['option-a', 'option-b', 'option-c', 'option-d'];
+
+            let html = '';
+
+            options.forEach((option, index) => {
+                const percentage = stats.answerPercentages[index] || 0;
+                const count = stats.answerCounts[index] || 0;
+
+                html += `
+                    <div class="answer-option">
+                        <div class="option-label">${option}:</div>
+                        <div class="option-bar">
+                            <div class="option-fill ${colors[index]}" style="width: ${percentage}%">
+                                ${percentage}% (${count})
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                <div class="response-summary">
+                    <div class="response-count">${stats.answeredCount}/${stats.totalUsers}</div>
+                    <div>已作答人數</div>
+                </div>
+            `;
+
+            content.innerHTML = html;
         }
 
         // 更新用戶顯示
