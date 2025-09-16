@@ -5,8 +5,14 @@ class GameWebSocket {
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
     this.reconnectDelay = 1000;
-    this.userId = localStorage.getItem('gameUserId');
+    this.userId = sessionStorage.getItem('gameUserId');
     this.messageHandlers = new Map();
+
+    // 為當前分頁生成唯一標識符
+    if (!sessionStorage.getItem('tabId')) {
+      sessionStorage.setItem('tabId', 'tab_' + Math.random().toString(36).substring(2, 15));
+    }
+    this.tabId = sessionStorage.getItem('tabId');
   }
 
   connect() {
@@ -80,7 +86,7 @@ class GameWebSocket {
     switch (message.type) {
       case 'connected':
         this.userId = message.userId;
-        localStorage.setItem('gameUserId', this.userId);
+        sessionStorage.setItem('gameUserId', this.userId);
         break;
 
       case 'reconnected':
@@ -228,9 +234,12 @@ function formatTime(milliseconds) {
   return `${seconds}.${ms}秒`;
 }
 
-// 清除所有計時器
+// 清除所有計時器（避免跨分頁干擾）
 function clearAllTimers() {
-  const timers = window.gameTimers || [];
-  timers.forEach(timer => clearInterval(timer));
-  window.gameTimers = [];
+  // 使用分頁唯一的計時器數組
+  if (!window.currentTabTimers) {
+    window.currentTabTimers = [];
+  }
+  window.currentTabTimers.forEach(timer => clearInterval(timer));
+  window.currentTabTimers = [];
 }

@@ -51,8 +51,8 @@
         const nameInput = document.getElementById('playerName');
         const joinButton = document.getElementById('joinButton');
 
-        // 檢查是否有保存的名字
-        const savedName = localStorage.getItem('playerName');
+        // 檢查是否有保存的名字（僅當前分頁）
+        const savedName = sessionStorage.getItem('playerName');
         if (savedName) {
             nameInput.value = savedName;
         }
@@ -71,8 +71,8 @@
                 return;
             }
 
-            // 保存名字
-            localStorage.setItem('playerName', name);
+            // 保存名字（僅當前分頁）
+            sessionStorage.setItem('playerName', name);
 
             // 跳轉到遊戲頁面
             window.location.href = `/game?name=${encodeURIComponent(name)}`;

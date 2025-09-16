@@ -142,7 +142,7 @@
         function init() {
             console.log('遊戲頁面初始化開始');
             const urlParams = new URLSearchParams(window.location.search);
-            const playerName = urlParams.get('name') || localStorage.getItem('playerName');
+            const playerName = urlParams.get('name') || sessionStorage.getItem('playerName');
 
             console.log('玩家名稱:', playerName);
 
@@ -509,7 +509,7 @@
 
         // 再玩一次
         function playAgain() {
-            localStorage.removeItem('gameUserId');
+            sessionStorage.removeItem('gameUserId');
             window.location.reload();
         }
 
