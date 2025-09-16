@@ -405,8 +405,6 @@
             ws.on('admin_question_start', handleAdminQuestionStart);
             ws.on('admin_next_question_countdown', handleAdminNextQuestionCountdown);
             ws.on('answer_stats', handleAnswerStats);
-            ws.on('admin_countdown_update', handleAdminCountdownUpdate);
-            ws.on('admin_time_up', handleAdminTimeUp);
 
             // 連接WebSocket
             ws.connect();
@@ -539,22 +537,11 @@
         // 處理管理員題目開始
         function handleAdminQuestionStart(message) {
             hideAllCountdowns();
-            showQuestionCountdown(message.timeLimit / 1000, true); // 使用服務器時間
+            showQuestionCountdown(10, false); // 使用客戶端10秒倒計時
             resetAnswerStats();
             addLog(`第 ${message.questionIndex + 1} 題: ${message.question.question}`, 'info');
         }
 
-        // 處理服務器倒計時更新
-        function handleAdminCountdownUpdate(message) {
-            updateQuestionCountdown(message.remaining);
-        }
-
-        // 處理時間到了
-        function handleAdminTimeUp(message) {
-            updateQuestionCountdown(0);
-            updateAnswerStats(message.stats);
-            addLog(`第 ${message.questionIndex + 1} 題時間到！`, 'warning');
-        }
 
         // 處理管理員下一題倒計時
         function handleAdminNextQuestionCountdown(message) {
@@ -597,34 +584,28 @@
             valueElement.textContent = seconds;
 
             if (!useServerTime) {
-                // 只有在不使用服務器時間時才啟動本地倒計時
+                // 啟動本地倒計時
                 const interval = setInterval(() => {
                     seconds--;
                     if (seconds <= 0) {
                         clearInterval(interval);
                         valueElement.textContent = '時間到!';
+                        valueElement.style.color = '#dc3545';
                         setTimeout(() => {
                             countdown.classList.remove('active');
+                            valueElement.style.color = '';
                         }, 2000);
                     } else {
                         valueElement.textContent = seconds;
+                        // 最後3秒變紅色
+                        if (seconds <= 3) {
+                            valueElement.style.color = '#dc3545';
+                        }
                     }
                 }, 1000);
             }
         }
 
-        // 更新題目倒計時（由服務器控制）
-        function updateQuestionCountdown(seconds) {
-            const valueElement = document.getElementById('questionCountdownValue');
-            if (seconds <= 0) {
-                valueElement.textContent = '時間到!';
-                setTimeout(() => {
-                    document.getElementById('questionCountdown').classList.remove('active');
-                }, 2000);
-            } else {
-                valueElement.textContent = seconds;
-            }
-        }
 
         // 顯示下一題倒計時
         function showNextQuestionCountdown(seconds) {
