@@ -230,6 +230,109 @@
             color: #721c24;
         }
 
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 10px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: #f8f9fa;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .displayed-count {
+            font-size: 0.9em;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .admin-users-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .more-players {
+            text-align: center;
+            padding: 10px;
+            color: #666;
+            font-style: italic;
+            border-top: 1px solid #eee;
+        }
+
+        .users-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .player-count {
+            color: #667eea;
+            font-weight: normal;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .user-item.current-user {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+        }
+
+        .user-item.offline {
+            opacity: 0.6;
+            border-left-color: #dc3545;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-rank {
+            font-weight: bold;
+            color: #667eea;
+            min-width: 30px;
+        }
+
+        .user-name {
+            font-weight: 500;
+        }
+
+        .user-score {
+            font-weight: bold;
+            color: #28a745;
+        }
+
         @media (max-width: 768px) {
             .admin-container {
                 margin: 10px;
@@ -333,9 +436,26 @@
 
             <!-- 參與者列表 -->
             <div>
-                <h3>參與者列表</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3>參與者列表</h3>
+                    <div class="player-controls">
+                        <select id="playerListSort" style="margin-right: 10px; padding: 5px;">
+                            <option value="score">按分數排序</option>
+                            <option value="name">按姓名排序</option>
+                            <option value="status">按連接狀態</option>
+                        </select>
+                        <input type="text" id="playerSearch" placeholder="搜索玩家"
+                               style="padding: 5px; margin-right: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <span id="displayedCount" class="displayed-count">顯示: 0/0</span>
+                    </div>
+                </div>
                 <div id="adminUsersList" class="admin-users-list">
                     <p style="text-align: center; color: #666;">暫無參與者</p>
+                </div>
+                <div id="adminPagination" class="pagination hidden">
+                    <button id="prevPage" onclick="changePage(-1)">上一頁</button>
+                    <span id="pageInfo">第 1 頁 / 共 1 頁</span>
+                    <button id="nextPage" onclick="changePage(1)">下一頁</button>
                 </div>
             </div>
         </div>
@@ -370,7 +490,13 @@
             users: [],
             currentQuestion: -1,
             totalQuestions: 0,
-            questions: []
+            questions: [],
+            // 分頁和篩選狀態
+            currentPage: 1,
+            pageSize: 20,
+            sortBy: 'score',
+            searchTerm: '',
+            filteredUsers: []
         };
 
         // WebSocket連接
@@ -414,6 +540,9 @@
 
             // 定期刷新數據
             setInterval(refreshData, 5000);
+
+            // 設置搜索和排序事件監聽器
+            setupUserListControls();
         }
 
 
@@ -749,31 +878,79 @@
             content.innerHTML = html;
         }
 
+        // 篩選和排序用戶
+        function filterAndSortUsers() {
+            let filtered = [...adminState.users];
+
+            // 搜索篩選
+            if (adminState.searchTerm) {
+                const term = adminState.searchTerm.toLowerCase();
+                filtered = filtered.filter(user =>
+                    user.name.toLowerCase().includes(term) ||
+                    user.id.toLowerCase().includes(term)
+                );
+            }
+
+            // 排序
+            switch (adminState.sortBy) {
+                case 'score':
+                    filtered.sort((a, b) => b.score - a.score);
+                    break;
+                case 'name':
+                    filtered.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+                case 'status':
+                    filtered.sort((a, b) => {
+                        if (a.connected === b.connected) {
+                            return b.score - a.score; // 相同狀態按分數排序
+                        }
+                        return b.connected - a.connected; // 在線的在前
+                    });
+                    break;
+            }
+
+            adminState.filteredUsers = filtered;
+            return filtered;
+        }
+
         // 更新用戶顯示
         function updateUsersDisplay() {
             const container = document.getElementById('adminUsersList');
+            const displayedCountElement = document.getElementById('displayedCount');
+            const paginationElement = document.getElementById('adminPagination');
 
             if (adminState.users.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #666;">暫無參與者</p>';
+                displayedCountElement.textContent = '顯示: 0/0';
+                paginationElement.classList.add('hidden');
                 return;
             }
 
+            const filteredUsers = filterAndSortUsers();
+            const totalPages = Math.ceil(filteredUsers.length / adminState.pageSize);
+            const startIndex = (adminState.currentPage - 1) * adminState.pageSize;
+            const endIndex = Math.min(startIndex + adminState.pageSize, filteredUsers.length);
+            const pageUsers = filteredUsers.slice(startIndex, endIndex);
+
+            // 更新顯示計數
+            displayedCountElement.textContent = `顯示: ${pageUsers.length}/${filteredUsers.length} (總計: ${adminState.users.length})`;
+
             container.innerHTML = '';
 
-            // 按分數排序
-            const sortedUsers = [...adminState.users].sort((a, b) => b.score - a.score);
+            pageUsers.forEach((user, pageIndex) => {
+                const globalIndex = adminState.users.findIndex(u => u.id === user.id);
+                const sortIndex = filteredUsers.findIndex(u => u.id === user.id) + 1;
 
-            sortedUsers.forEach((user, index) => {
                 const userElement = document.createElement('div');
                 userElement.className = `admin-user-item ${user.connected ? '' : 'offline'}`;
 
                 userElement.innerHTML = `
                     <div>
                         <div style="font-weight: bold; font-size: 1.1em;">
-                            ${index + 1}. ${user.name}
+                            #${sortIndex} ${user.name}
                         </div>
                         <div style="font-size: 0.9em; color: #666;">
-                            ID: ${user.id}
+                            ID: ${user.id.substring(0, 12)}...
                         </div>
                     </div>
                     <div style="text-align: right;">
@@ -787,6 +964,63 @@
                 `;
 
                 container.appendChild(userElement);
+            });
+
+            // 更新分頁控制
+            updatePagination(totalPages);
+        }
+
+        // 更新分頁控制
+        function updatePagination(totalPages) {
+            const paginationElement = document.getElementById('adminPagination');
+            const pageInfoElement = document.getElementById('pageInfo');
+            const prevButton = document.getElementById('prevPage');
+            const nextButton = document.getElementById('nextPage');
+
+            if (totalPages <= 1) {
+                paginationElement.classList.add('hidden');
+                return;
+            }
+
+            paginationElement.classList.remove('hidden');
+            pageInfoElement.textContent = `第 ${adminState.currentPage} 頁 / 共 ${totalPages} 頁`;
+
+            prevButton.disabled = adminState.currentPage <= 1;
+            nextButton.disabled = adminState.currentPage >= totalPages;
+        }
+
+        // 分頁控制函數
+        function changePage(direction) {
+            const filteredUsers = adminState.filteredUsers;
+            const totalPages = Math.ceil(filteredUsers.length / adminState.pageSize);
+
+            adminState.currentPage += direction;
+            adminState.currentPage = Math.max(1, Math.min(adminState.currentPage, totalPages));
+
+            updateUsersDisplay();
+        }
+
+        // 設置用戶列表控制
+        function setupUserListControls() {
+            const sortSelect = document.getElementById('playerListSort');
+            const searchInput = document.getElementById('playerSearch');
+
+            // 排序選擇器
+            sortSelect.addEventListener('change', (e) => {
+                adminState.sortBy = e.target.value;
+                adminState.currentPage = 1; // 重置到第一頁
+                updateUsersDisplay();
+            });
+
+            // 搜索輸入框
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    adminState.searchTerm = e.target.value;
+                    adminState.currentPage = 1; // 重置到第一頁
+                    updateUsersDisplay();
+                }, 300); // 300ms 延遲，避免過於頻繁的搜索
             });
         }
 

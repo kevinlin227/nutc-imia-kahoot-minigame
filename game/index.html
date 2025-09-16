@@ -19,8 +19,11 @@
             </div>
 
             <div id="usersList" class="users-list">
-                <h3>參與者列表</h3>
-                <div id="usersContainer"></div>
+                <h3>參與者列表 <span id="playerCount" class="player-count">(0)</span></h3>
+                <div id="usersContainer" class="users-container"></div>
+                <div id="morePlayersIndicator" class="more-players hidden">
+                    還有更多玩家...
+                </div>
             </div>
 
             <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 15px;">
@@ -229,24 +232,63 @@
         // 處理用戶列表更新
         function handleUsersUpdate(message) {
             const container = document.getElementById('usersContainer');
+            const playerCountElement = document.getElementById('playerCount');
+            const moreIndicator = document.getElementById('morePlayersIndicator');
+
+            // 更新玩家總數
+            playerCountElement.textContent = `(${message.users.length})`;
+
             container.innerHTML = '';
 
-            message.users.forEach(user => {
+            // 限制顯示的玩家數量，避免列表過長
+            const maxDisplayUsers = 10;
+            const displayUsers = message.users.slice(0, maxDisplayUsers);
+            const hasMore = message.users.length > maxDisplayUsers;
+
+            // 確保當前用戶始終顯示在列表中
+            let currentUserShown = false;
+            const currentUserIndex = message.users.findIndex(user => user.id === gameState.userId);
+
+            if (currentUserIndex >= maxDisplayUsers) {
+                // 如果當前用戶不在前10名中，替換最後一個位置
+                displayUsers[maxDisplayUsers - 1] = message.users[currentUserIndex];
+                currentUserShown = true;
+            }
+
+            displayUsers.forEach((user, index) => {
                 const userElement = document.createElement('div');
                 userElement.className = `user-item ${user.connected ? '' : 'offline'}`;
 
+                const isCurrentUser = user.id === gameState.userId;
+                const rankDisplay = currentUserIndex >= 0 && currentUserIndex >= maxDisplayUsers && isCurrentUser
+                    ? `#${currentUserIndex + 1}`
+                    : `#${index + 1}`;
+
                 userElement.innerHTML = `
-                    <div>
+                    <div class="user-info">
                         <span class="status-indicator ${user.connected ? 'online' : 'offline'}"></span>
-                        ${user.name} ${user.id === gameState.userId ? '(您)' : ''}
+                        <span class="user-rank">${rankDisplay}</span>
+                        <span class="user-name">${user.name} ${isCurrentUser ? '(您)' : ''}</span>
                     </div>
-                    <div style="font-weight: bold;">
+                    <div class="user-score">
                         ${user.score} 分
                     </div>
                 `;
 
+                if (isCurrentUser) {
+                    userElement.classList.add('current-user');
+                }
+
                 container.appendChild(userElement);
             });
+
+            // 顯示或隱藏"更多玩家"指示器
+            if (hasMore) {
+                moreIndicator.classList.remove('hidden');
+                moreIndicator.textContent = `還有 ${message.users.length - maxDisplayUsers} 位玩家...`;
+            } else {
+                moreIndicator.classList.add('hidden');
+            }
         }
 
         // 處理遊戲開始倒計時（客戶端實現）
