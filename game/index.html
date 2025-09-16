@@ -170,6 +170,8 @@
             ws.on('show_results', handleShowResults);
             ws.on('next_question_countdown', handleNextQuestionCountdown);
             ws.on('game_end', handleGameEnd);
+            ws.on('countdown_update', handleCountdownUpdate);
+            ws.on('time_up', handleTimeUp);
 
             // 連接WebSocket
             ws.connect();
@@ -252,12 +254,12 @@
         // 處理題目開始
         function handleQuestionStart(message) {
             gameState.currentQuestion = message.questionIndex;
-            gameState.questionStartTime = Date.now();
+            gameState.questionStartTime = message.startTime || Date.now();
             gameState.selectedAnswer = null;
 
             switchScreen('game');
             loadQuestion(message.questionIndex);
-            startQuestionTimer(message.question.timeLimit);
+            initQuestionTimer(message.question.timeLimit);
         }
 
         // 載入題目
@@ -306,20 +308,45 @@
             });
         }
 
-        // 開始題目計時器
-        function startQuestionTimer(duration) {
-            const timerElement = document.getElementById('gameTimer');
+        // 處理服務器倒計時更新
+        function handleCountdownUpdate(message) {
+            if (message.questionIndex === gameState.currentQuestion) {
+                const timerElement = document.getElementById('gameTimer');
+                timerElement.textContent = message.remaining;
 
-            const timer = startTimer(timerElement, duration, () => {
-                // 時間到，自動提交（如果還沒選擇）
+                // 時間快用完時的視覺效果
+                if (message.remaining <= 3) {
+                    timerElement.style.color = '#dc3545';
+                    timerElement.style.animation = 'pulse 0.5s infinite';
+                } else {
+                    timerElement.style.color = '';
+                    timerElement.style.animation = '';
+                }
+            }
+        }
+
+        // 處理時間到了
+        function handleTimeUp(message) {
+            if (message.questionIndex === gameState.currentQuestion) {
+                const timerElement = document.getElementById('gameTimer');
+                timerElement.textContent = '時間到!';
+                timerElement.style.color = '#dc3545';
+
+                // 如果還沒選擇，禁用選項
                 if (gameState.selectedAnswer === null) {
                     document.getElementById('answerIndicator').textContent = '時間到！等待結果...';
                     const options = document.querySelectorAll('.option');
                     options.forEach(option => option.style.pointerEvents = 'none');
                 }
-            });
+            }
+        }
 
-            gameState.timers.push(timer);
+        // 初始化題目計時器顯示（由服務器控制）
+        function initQuestionTimer(duration) {
+            const timerElement = document.getElementById('gameTimer');
+            timerElement.textContent = Math.ceil(duration / 1000);
+            timerElement.style.color = '';
+            timerElement.style.animation = '';
         }
 
         // 處理結果顯示

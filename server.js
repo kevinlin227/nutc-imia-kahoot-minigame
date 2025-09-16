@@ -421,7 +421,8 @@ function startQuestion(questionIndex) {
       options: question.options,
       timeLimit: question.timeLimit
     },
-    questionIndex: questionIndex
+    questionIndex: questionIndex,
+    startTime: gameState.questionStartTime
   });
 
   // 向管理員發送題目開始通知，包含倒計時信息
@@ -432,6 +433,9 @@ function startQuestion(questionIndex) {
     startTime: gameState.questionStartTime,
     timeLimit: question.timeLimit
   });
+
+  // 啟動服務器端倒計時更新
+  startServerCountdown(questionIndex, question.timeLimit);
 
   console.log(`開始第 ${questionIndex + 1} 題`);
 }
@@ -547,6 +551,7 @@ function getAnswerStats(questionIndex) {
     .filter(user => user.answers.find(a => a.questionIndex === questionIndex));
 
   const answerCounts = [0, 0, 0, 0]; // 4個選項的計數
+  const unansweredCount = totalUsers - answeredUsers.length;
 
   answeredUsers.forEach(user => {
     const answer = user.answers.find(a => a.questionIndex === questionIndex);
@@ -558,10 +563,12 @@ function getAnswerStats(questionIndex) {
   return {
     totalUsers,
     answeredCount: answeredUsers.length,
+    unansweredCount,
     answerCounts,
     answerPercentages: answerCounts.map(count =>
-      answeredUsers.length > 0 ? Math.round((count / answeredUsers.length) * 100) : 0
-    )
+      totalUsers > 0 ? Math.round((count / totalUsers) * 100) : 0
+    ),
+    unansweredPercentage: totalUsers > 0 ? Math.round((unansweredCount / totalUsers) * 100) : 0
   };
 }
 
@@ -573,6 +580,47 @@ function findUserIdByWebSocket(ws) {
     }
   }
   return null;
+}
+
+// 啟動服務器端倒計時
+function startServerCountdown(questionIndex, timeLimit) {
+  const startTime = Date.now();
+
+  // 每秒廣播剩餘時間
+  const countdownInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const remaining = Math.max(0, Math.ceil((timeLimit - elapsed) / 1000));
+
+    // 廣播倒計時更新
+    broadcast({
+      type: 'countdown_update',
+      remaining: remaining,
+      questionIndex: questionIndex
+    });
+
+    broadcastToAdmins({
+      type: 'admin_countdown_update',
+      remaining: remaining,
+      questionIndex: questionIndex
+    });
+
+    // 如果時間到了，停止倒計時
+    if (remaining <= 0) {
+      clearInterval(countdownInterval);
+
+      // 發送時間結束通知
+      broadcast({
+        type: 'time_up',
+        questionIndex: questionIndex
+      });
+
+      broadcastToAdmins({
+        type: 'admin_time_up',
+        questionIndex: questionIndex,
+        stats: getAnswerStats(questionIndex)
+      });
+    }
+  }, 1000);
 }
 
 // 定期清理離線用戶（可選）
