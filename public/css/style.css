@@ -1,0 +1,264 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 600px;
+  width: 90%;
+}
+
+h1 {
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 2.5em;
+}
+
+h2 {
+  color: #555;
+  margin-bottom: 20px;
+  font-size: 1.8em;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  transition: border-color 0.3s;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin: 5px;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.question-container {
+  margin: 30px 0;
+}
+
+.question {
+  font-size: 1.5em;
+  color: #333;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 15px;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.option {
+  padding: 20px;
+  border: 2px solid #ddd;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: white;
+  font-size: 16px;
+}
+
+.option:hover {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.option.selected {
+  border-color: #667eea;
+  background: #667eea;
+  color: white;
+}
+
+.option.correct {
+  border-color: #28a745;
+  background: #28a745;
+  color: white;
+}
+
+.option.incorrect {
+  border-color: #dc3545;
+  background: #dc3545;
+  color: white;
+}
+
+.timer {
+  font-size: 2em;
+  color: #dc3545;
+  margin: 20px 0;
+  font-weight: bold;
+}
+
+.countdown {
+  font-size: 5em;
+  color: #667eea;
+  margin: 30px 0;
+  font-weight: bold;
+}
+
+.users-list {
+  text-align: left;
+  margin: 20px 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.user-item {
+  padding: 10px;
+  margin: 5px 0;
+  background: #f8f9fa;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-item.offline {
+  opacity: 0.5;
+}
+
+.score-display {
+  font-size: 1.5em;
+  color: #667eea;
+  margin: 20px 0;
+  font-weight: bold;
+}
+
+.rank-display {
+  font-size: 1.2em;
+  color: #555;
+  margin: 10px 0;
+}
+
+.leaderboard {
+  margin: 30px 0;
+  text-align: left;
+}
+
+.leaderboard-item {
+  padding: 15px;
+  margin: 10px 0;
+  background: #f8f9fa;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.leaderboard-item.top3 {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #333;
+  font-weight: bold;
+}
+
+.admin-controls {
+  margin: 20px 0;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 15px;
+}
+
+.admin-controls button {
+  margin: 10px;
+  padding: 10px 20px;
+}
+
+.status-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.status-indicator.online {
+  background: #28a745;
+}
+
+.status-indicator.offline {
+  background: #dc3545;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.waiting-screen {
+  text-align: center;
+}
+
+.game-screen {
+  text-align: center;
+}
+
+.results-screen {
+  text-align: center;
+}
+
+.final-screen {
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 20px;
+    margin: 20px;
+  }
+
+  .options {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 2em;
+  }
+
+  .countdown {
+    font-size: 3em;
+  }
+}

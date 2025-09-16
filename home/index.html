@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kahoot 遊戲 - 主頁</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Kahoot 問答遊戲</h1>
+        <p style="margin-bottom: 30px; color: #666; font-size: 1.2em;">
+            歡迎來到多人即時問答遊戲！<br>
+            輸入您的名字開始遊戲
+        </p>
+
+        <form id="joinForm">
+            <input
+                type="text"
+                id="playerName"
+                placeholder="請輸入您的名字"
+                required
+                maxlength="20"
+                autocomplete="off"
+            >
+            <button type="submit" id="joinButton">
+                🚀 開始遊戲
+            </button>
+        </form>
+
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 15px;">
+            <h3 style="color: #333; margin-bottom: 15px;">遊戲規則</h3>
+            <ul style="text-align: left; color: #666; line-height: 1.6;">
+                <li>每題有4個選項，選擇正確答案獲得分數</li>
+                <li>答題速度越快，獲得分數越高</li>
+                <li>每題限時10秒作答</li>
+                <li>支持斷線重連，不會丟失進度</li>
+                <li>最終會顯示排行榜和前三名</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <a href="/admin" style="color: #667eea; text-decoration: none; font-size: 14px;">
+                📊 後台管理
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('joinForm');
+        const nameInput = document.getElementById('playerName');
+        const joinButton = document.getElementById('joinButton');
+
+        // 檢查是否有保存的名字
+        const savedName = localStorage.getItem('playerName');
+        if (savedName) {
+            nameInput.value = savedName;
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert('請輸入您的名字！');
+                return;
+            }
+
+            if (name.length > 20) {
+                alert('名字長度不能超過20個字符！');
+                return;
+            }
+
+            // 保存名字
+            localStorage.setItem('playerName', name);
+
+            // 跳轉到遊戲頁面
+            window.location.href = `/game?name=${encodeURIComponent(name)}`;
+        });
+
+        // 輸入框焦點
+        nameInput.focus();
+
+        // 按Enter鍵提交
+        nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                form.requestSubmit();
+            }
+        });
+
+        // 檢查伺服器連接狀態
+        fetch('/')
+            .then(() => {
+                console.log('伺服器連接正常');
+            })
+            .catch(() => {
+                const warning = document.createElement('div');
+                warning.innerHTML = `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; color: #856404;
+                                padding: 15px; border-radius: 10px; margin-top: 20px;">
+                        ⚠️ 無法連接到遊戲伺服器，請確認伺服器是否運行中
+                    </div>
+                `;
+                document.querySelector('.container').appendChild(warning);
+            });
+    </script>
+</body>
+</html>

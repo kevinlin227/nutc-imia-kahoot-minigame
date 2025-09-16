@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kahoot 遊戲</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 等待畫面 -->
+        <div id="waitingScreen" class="waiting-screen">
+            <h1>🎮 等待遊戲開始</h1>
+            <p id="playerWelcome" style="font-size: 1.2em; color: #667eea; margin-bottom: 20px;"></p>
+
+            <div id="connectionStatus" style="margin: 20px 0;">
+                <div class="status-indicator online"></div>
+                <span>已連接到遊戲伺服器</span>
+            </div>
+
+            <div id="usersList" class="users-list">
+                <h3>參與者列表</h3>
+                <div id="usersContainer"></div>
+            </div>
+
+            <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 15px;">
+                <p style="color: #666;">等待管理員開始遊戲...</p>
+                <p style="color: #999; font-size: 14px; margin-top: 10px;">
+                    題目已預載完成，斷線後可自動重連
+                </p>
+            </div>
+        </div>
+
+        <!-- 遊戲開始倒計時 -->
+        <div id="startCountdownScreen" class="hidden">
+            <h1>🚀 遊戲即將開始</h1>
+            <div id="startCountdown" class="countdown">3</div>
+            <p style="color: #666;">準備好了嗎？</p>
+        </div>
+
+        <!-- 遊戲進行畫面 -->
+        <div id="gameScreen" class="game-screen hidden">
+            <div id="gameHeader" style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div id="questionCounter" style="color: #667eea; font-weight: bold;"></div>
+                    <div id="playerScore" class="score-display">分數: 0</div>
+                </div>
+                <div id="gameTimer" class="timer">10</div>
+            </div>
+
+            <div id="questionContainer" class="question-container">
+                <div id="questionText" class="question"></div>
+                <div id="optionsContainer" class="options"></div>
+            </div>
+
+            <div id="answerStatus" style="margin-top: 20px; color: #666;">
+                <span id="answerIndicator"></span>
+            </div>
+        </div>
+
+        <!-- 題目結果畫面 -->
+        <div id="resultsScreen" class="results-screen hidden">
+            <h2>📊 題目結果</h2>
+
+            <div id="answerResult" style="margin: 30px 0;">
+                <div id="correctAnswerDisplay" style="margin-bottom: 15px;"></div>
+                <div id="userAnswerDisplay"></div>
+            </div>
+
+            <div id="scoreUpdate" style="margin: 20px 0;">
+                <div id="currentScore" class="score-display"></div>
+                <div id="currentRank" class="rank-display"></div>
+                <div id="rankGap" style="color: #999; font-size: 14px;"></div>
+            </div>
+
+            <div id="miniLeaderboard" class="leaderboard">
+                <h3>當前排行榜</h3>
+                <div id="leaderboardContainer"></div>
+            </div>
+
+            <div style="margin-top: 20px; color: #666;">
+                等待進入下一題...
+            </div>
+        </div>
+
+        <!-- 下一題倒計時 -->
+        <div id="nextQuestionScreen" class="hidden">
+            <h2>➡️ 下一題準備中</h2>
+            <div id="nextCountdown" class="countdown">3</div>
+        </div>
+
+        <!-- 最終結果畫面 -->
+        <div id="finalScreen" class="final-screen hidden">
+            <h1>🎉 遊戲結束</h1>
+
+            <div id="finalResult" style="margin: 30px 0;">
+                <div id="finalScore" class="score-display"></div>
+                <div id="finalRank" class="rank-display"></div>
+            </div>
+
+            <div id="topThree" style="margin: 30px 0;">
+                <h2>🏆 前三名</h2>
+                <div id="topThreeContainer"></div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <button onclick="playAgain()">🔄 再玩一次</button>
+                <button onclick="goHome()" style="background: #6c757d;">🏠 回到主頁</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/public/js/common.js"></script>
+    <script>
+        // 遊戲狀態
+        const gameState = {
+            currentScreen: 'waiting',
+            userId: null,
+            questions: [],
+            currentQuestion: 0,
+            selectedAnswer: null,
+            questionStartTime: null,
+            timers: []
+        };
+
+        // WebSocket連接
+        const ws = new GameWebSocket();
+
+        // DOM元素
+        const screens = {
+            waiting: document.getElementById('waitingScreen'),
+            startCountdown: document.getElementById('startCountdownScreen'),
+            game: document.getElementById('gameScreen'),
+            results: document.getElementById('resultsScreen'),
+            nextQuestion: document.getElementById('nextQuestionScreen'),
+            final: document.getElementById('finalScreen')
+        };
+
+        // 初始化
+        function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const playerName = urlParams.get('name') || localStorage.getItem('playerName');
+
+            if (!playerName) {
+                window.location.href = '/home';
+                return;
+            }
+
+            document.getElementById('playerWelcome').textContent = `歡迎, ${playerName}!`;
+
+            // 設置WebSocket事件處理
+            ws.onopen = () => {
+                updateConnectionStatus(true);
+                ws.send({
+                    type: 'join',
+                    name: playerName
+                });
+            };
+
+            ws.onclose = () => {
+                updateConnectionStatus(false);
+            };
+
+            // 註冊訊息處理器
+            ws.on('connected', handleConnected);
+            ws.on('reconnected', handleReconnected);
+            ws.on('users_update', handleUsersUpdate);
+            ws.on('game_starting', handleGameStarting);
+            ws.on('question_start', handleQuestionStart);
+            ws.on('show_results', handleShowResults);
+            ws.on('next_question_countdown', handleNextQuestionCountdown);
+            ws.on('game_end', handleGameEnd);
+
+            // 連接WebSocket
+            ws.connect();
+        }
+
+        // 連接狀態更新
+        function updateConnectionStatus(connected) {
+            const statusIndicator = document.querySelector('.status-indicator');
+            const statusText = statusIndicator.nextElementSibling;
+
+            if (connected) {
+                statusIndicator.className = 'status-indicator online';
+                statusText.textContent = '已連接到遊戲伺服器';
+            } else {
+                statusIndicator.className = 'status-indicator offline';
+                statusText.textContent = '連接已斷開，嘗試重連中...';
+            }
+        }
+
+        // 處理連接成功
+        function handleConnected(message) {
+            gameState.userId = message.userId;
+            gameState.questions = message.questions;
+
+            showNotification('成功加入遊戲！', 'success');
+        }
+
+        // 處理重連成功
+        function handleReconnected(message) {
+            gameState.userId = message.userId;
+
+            // 根據當前遊戲狀態切換畫面
+            if (message.gameStatus === 'playing') {
+                if (message.showingResults) {
+                    // 如果在顯示結果，切換到結果畫面
+                    switchScreen('results');
+                } else {
+                    // 如果在進行遊戲，切換到遊戲畫面
+                    switchScreen('game');
+                    loadQuestion(message.currentQuestion);
+                }
+            }
+
+            showNotification('重連成功！', 'success');
+        }
+
+        // 處理用戶列表更新
+        function handleUsersUpdate(message) {
+            const container = document.getElementById('usersContainer');
+            container.innerHTML = '';
+
+            message.users.forEach(user => {
+                const userElement = document.createElement('div');
+                userElement.className = `user-item ${user.connected ? '' : 'offline'}`;
+
+                userElement.innerHTML = `
+                    <div>
+                        <span class="status-indicator ${user.connected ? 'online' : 'offline'}"></span>
+                        ${user.name} ${user.id === gameState.userId ? '(您)' : ''}
+                    </div>
+                    <div style="font-weight: bold;">
+                        ${user.score} 分
+                    </div>
+                `;
+
+                container.appendChild(userElement);
+            });
+        }
+
+        // 處理遊戲開始倒計時
+        function handleGameStarting(message) {
+            switchScreen('startCountdown');
+
+            const countdownElement = document.getElementById('startCountdown');
+            startCountdown(countdownElement, message.countdown, () => {
+                // 倒計時結束後等待第一題
+            });
+        }
+
+        // 處理題目開始
+        function handleQuestionStart(message) {
+            gameState.currentQuestion = message.questionIndex;
+            gameState.questionStartTime = Date.now();
+            gameState.selectedAnswer = null;
+
+            switchScreen('game');
+            loadQuestion(message.questionIndex);
+            startQuestionTimer(message.question.timeLimit);
+        }
+
+        // 載入題目
+        function loadQuestion(questionIndex) {
+            const question = gameState.questions[questionIndex];
+
+            document.getElementById('questionCounter').textContent =
+                `第 ${questionIndex + 1} 題 / 共 ${gameState.questions.length} 題`;
+
+            document.getElementById('questionText').textContent = question.question;
+
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            question.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => selectAnswer(index));
+                optionsContainer.appendChild(optionElement);
+            });
+
+            document.getElementById('answerIndicator').textContent = '';
+        }
+
+        // 選擇答案
+        function selectAnswer(answerIndex) {
+            if (gameState.selectedAnswer !== null) return;
+
+            gameState.selectedAnswer = answerIndex;
+            const timeSpent = Date.now() - gameState.questionStartTime;
+
+            // 視覺反饋
+            const options = document.querySelectorAll('.option');
+            options[answerIndex].classList.add('selected');
+            options.forEach(option => option.style.pointerEvents = 'none');
+
+            document.getElementById('answerIndicator').textContent = '答案已提交，等待結果...';
+
+            // 發送答案到伺服器
+            ws.send({
+                type: 'answer',
+                questionIndex: gameState.currentQuestion,
+                answer: answerIndex,
+                timeSpent: timeSpent
+            });
+        }
+
+        // 開始題目計時器
+        function startQuestionTimer(duration) {
+            const timerElement = document.getElementById('gameTimer');
+
+            const timer = startTimer(timerElement, duration, () => {
+                // 時間到，自動提交（如果還沒選擇）
+                if (gameState.selectedAnswer === null) {
+                    document.getElementById('answerIndicator').textContent = '時間到！等待結果...';
+                    const options = document.querySelectorAll('.option');
+                    options.forEach(option => option.style.pointerEvents = 'none');
+                }
+            });
+
+            gameState.timers.push(timer);
+        }
+
+        // 處理結果顯示
+        function handleShowResults(message) {
+            clearAllTimers();
+            switchScreen('results');
+
+            const question = gameState.questions[gameState.currentQuestion];
+
+            // 顯示正確答案
+            document.getElementById('correctAnswerDisplay').innerHTML =
+                `<div style="color: #28a745; font-weight: bold; font-size: 1.2em;">
+                    正確答案: ${question.options[message.correctAnswer]}
+                </div>`;
+
+            // 顯示用戶答案
+            if (message.userAnswer !== null) {
+                const isCorrect = message.userAnswer === message.correctAnswer;
+                document.getElementById('userAnswerDisplay').innerHTML =
+                    `<div style="color: ${isCorrect ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                        您的答案: ${question.options[message.userAnswer]} ${isCorrect ? '✓' : '✗'}
+                    </div>`;
+            } else {
+                document.getElementById('userAnswerDisplay').innerHTML =
+                    `<div style="color: #999;">您未作答或重連錯過此題</div>`;
+            }
+
+            // 顯示分數和排名
+            document.getElementById('currentScore').textContent = `分數: ${message.score}`;
+            document.getElementById('currentRank').textContent = `排名: 第 ${message.rank} 名`;
+
+            if (message.gap > 0) {
+                document.getElementById('rankGap').textContent =
+                    `距離前一名還差 ${message.gap} 分`;
+            } else {
+                document.getElementById('rankGap').textContent = '';
+            }
+
+            // 顯示排行榜
+            displayLeaderboard(message.leaderboard);
+        }
+
+        // 顯示排行榜
+        function displayLeaderboard(leaderboard) {
+            const container = document.getElementById('leaderboardContainer');
+            container.innerHTML = '';
+
+            leaderboard.slice(0, 5).forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = `leaderboard-item ${item.rank <= 3 ? 'top3' : ''}`;
+
+                const rankEmoji = item.rank === 1 ? '🥇' : item.rank === 2 ? '🥈' : item.rank === 3 ? '🥉' : '';
+
+                itemElement.innerHTML = `
+                    <div>
+                        ${rankEmoji} ${item.rank}. ${item.name}
+                        ${item.id === gameState.userId ? ' (您)' : ''}
+                    </div>
+                    <div style="font-weight: bold;">
+                        ${item.score} 分
+                    </div>
+                `;
+
+                container.appendChild(itemElement);
+            });
+        }
+
+        // 處理下一題倒計時
+        function handleNextQuestionCountdown(message) {
+            switchScreen('nextQuestion');
+
+            const countdownElement = document.getElementById('nextCountdown');
+            startCountdown(countdownElement, message.countdown, () => {
+                // 倒計時結束後等待下一題
+            });
+        }
+
+        // 處理遊戲結束
+        function handleGameEnd(message) {
+            switchScreen('final');
+
+            document.getElementById('finalScore').textContent = `最終分數: ${message.finalScore}`;
+            document.getElementById('finalRank').textContent = `最終排名: 第 ${message.finalRank} 名`;
+
+            // 顯示前三名
+            const container = document.getElementById('topThreeContainer');
+            container.innerHTML = '';
+
+            message.topThree.forEach((player, index) => {
+                const rank = index + 1;
+                const emoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
+
+                const itemElement = document.createElement('div');
+                itemElement.className = 'leaderboard-item top3';
+                itemElement.innerHTML = `
+                    <div style="font-size: 1.2em;">
+                        ${emoji} ${player.name}
+                        ${player.id === gameState.userId ? ' (您)' : ''}
+                    </div>
+                    <div style="font-size: 1.2em; font-weight: bold;">
+                        ${player.score} 分
+                    </div>
+                `;
+                container.appendChild(itemElement);
+            });
+        }
+
+        // 切換畫面
+        function switchScreen(screenName) {
+            Object.values(screens).forEach(screen => {
+                screen.classList.add('hidden');
+            });
+
+            if (screens[screenName]) {
+                screens[screenName].classList.remove('hidden');
+                gameState.currentScreen = screenName;
+            }
+        }
+
+        // 清除所有計時器
+        function clearAllTimers() {
+            gameState.timers.forEach(timer => clearInterval(timer));
+            gameState.timers = [];
+        }
+
+        // 再玩一次
+        function playAgain() {
+            localStorage.removeItem('gameUserId');
+            window.location.reload();
+        }
+
+        // 回到主頁
+        function goHome() {
+            ws.close();
+            window.location.href = '/home';
+        }
+
+        // 頁面卸載時關閉連接
+        window.addEventListener('beforeunload', () => {
+            ws.close();
+        });
+
+        // 初始化
+        init();
+    </script>
+</body>
+</html>
