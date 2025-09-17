@@ -176,18 +176,35 @@
             border-radius: 15px;
             margin: 0 10px;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
+            margin-right: 80px; /* 為外部文字留出空間 */
         }
 
         .option-fill {
             height: 100%;
             border-radius: 15px;
             transition: width 0.5s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: relative;
             color: white;
             font-weight: bold;
+            min-width: 0;
+        }
+
+        .option-text {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            white-space: nowrap;
+            font-size: 13px;
+            z-index: 2;
+        }
+
+        .option-text.outside {
+            position: absolute;
+            left: calc(100% + 8px);
+            color: #333;
+            z-index: 3;
         }
 
         .option-fill.option-a { background: #e74c3c; }
@@ -420,9 +437,6 @@
                     <button id="nextQuestionBtn" onclick="nextQuestion()" disabled>
                         ➡️ 下一題
                     </button>
-                    <button id="endGameBtn" onclick="endGame()" disabled>
-                        🏁 結束遊戲
-                    </button>
                 </div>
                 <div style="margin-top: 15px;">
                     <button onclick="resetGame()" style="background: #dc3545;">
@@ -460,11 +474,6 @@
             </div>
         </div>
 
-        <!-- 題目預覽 -->
-        <div class="admin-panel">
-            <h3>題目預覽</h3>
-            <div id="questionsPreview" class="questions-preview"></div>
-        </div>
 
         <!-- 遊戲日誌 -->
         <div class="admin-panel">
@@ -535,8 +544,6 @@
             // 連接WebSocket
             ws.connect();
 
-            // 載入題目預覽
-            loadQuestionsPreview();
 
             // 定期刷新數據
             setInterval(refreshData, 5000);
@@ -546,52 +553,6 @@
         }
 
 
-        // 載入題目預覽
-        function loadQuestionsPreview() {
-            // 由於我們在伺服器端定義了題目，這裡直接展示
-            const questions = [
-                {
-                    question: "JavaScript中哪個方法用於添加數組元素？",
-                    options: ["push()", "add()", "insert()", "append()"],
-                    correctAnswer: 0
-                },
-                {
-                    question: "HTML中哪個標籤用於創建超連結？",
-                    options: ["<link>", "<href>", "<a>", "<url>"],
-                    correctAnswer: 2
-                },
-                {
-                    question: "CSS中哪個屬性用於設置文字顏色？",
-                    options: ["text-color", "font-color", "color", "background-color"],
-                    correctAnswer: 2
-                }
-            ];
-
-            const container = document.getElementById('questionsPreview');
-            container.innerHTML = '';
-
-            questions.forEach((q, index) => {
-                const questionElement = document.createElement('div');
-                questionElement.className = 'question-item';
-
-                questionElement.innerHTML = `
-                    <h4>第 ${index + 1} 題</h4>
-                    <p style="font-size: 1.1em; margin: 10px 0; font-weight: bold;">
-                        ${q.question}
-                    </p>
-                    <div class="question-options">
-                        ${q.options.map((option, optIndex) => `
-                            <div class="question-option ${optIndex === q.correctAnswer ? 'correct' : ''}">
-                                ${String.fromCharCode(65 + optIndex)}. ${option}
-                                ${optIndex === q.correctAnswer ? ' ✓' : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-
-                container.appendChild(questionElement);
-            });
-        }
 
         // 處理管理員連接成功
         function handleAdminConnected(message) {
@@ -770,37 +731,49 @@
                 <div class="answer-option">
                     <div class="option-label">A:</div>
                     <div class="option-bar">
-                        <div class="option-fill option-a" style="width: 0%">0%</div>
+                        <div class="option-fill option-a" style="width: 0%">
+                            <span class="option-text">0% (0)</span>
+                        </div>
                     </div>
                 </div>
                 <div class="answer-option">
                     <div class="option-label">B:</div>
                     <div class="option-bar">
-                        <div class="option-fill option-b" style="width: 0%">0%</div>
+                        <div class="option-fill option-b" style="width: 0%">
+                            <span class="option-text">0% (0)</span>
+                        </div>
                     </div>
                 </div>
                 <div class="answer-option">
                     <div class="option-label">C:</div>
                     <div class="option-bar">
-                        <div class="option-fill option-c" style="width: 0%">0%</div>
+                        <div class="option-fill option-c" style="width: 0%">
+                            <span class="option-text">0% (0)</span>
+                        </div>
                     </div>
                 </div>
                 <div class="answer-option">
                     <div class="option-label">D:</div>
                     <div class="option-bar">
-                        <div class="option-fill option-d" style="width: 0%">0%</div>
+                        <div class="option-fill option-d" style="width: 0%">
+                            <span class="option-text">0% (0)</span>
+                        </div>
                     </div>
                 </div>
                 <div class="answer-option">
                     <div class="option-label">等待中:</div>
                     <div class="option-bar">
-                        <div class="option-fill" style="width: 100%; background: #ffc107;">100% (0)</div>
+                        <div class="option-fill" style="width: 100%; background: #ffc107;">
+                            <span class="option-text">100% (0)</span>
+                        </div>
                     </div>
                 </div>
                 <div class="answer-option">
                     <div class="option-label">超時:</div>
                     <div class="option-bar">
-                        <div class="option-fill" style="width: 0%; background: #6c757d;">0% (0)</div>
+                        <div class="option-fill" style="width: 0%; background: #6c757d;">
+                            <span class="option-text outside">0% (0)</span>
+                        </div>
                     </div>
                 </div>
                 <div class="response-summary">
@@ -824,13 +797,17 @@
             options.forEach((option, index) => {
                 const percentage = stats.answerPercentages[index] || 0;
                 const count = stats.answerCounts[index] || 0;
+                const text = `${percentage}% (${count})`;
+
+                // 如果百分比太小（小於15%），將文字放在條形圖外部
+                const textClass = percentage < 15 ? 'option-text outside' : 'option-text';
 
                 html += `
                     <div class="answer-option">
                         <div class="option-label">${option}:</div>
                         <div class="option-bar">
                             <div class="option-fill ${colors[index]}" style="width: ${percentage}%">
-                                ${percentage}% (${count})
+                                <span class="${textClass}">${text}</span>
                             </div>
                         </div>
                     </div>
@@ -839,12 +816,15 @@
 
             // 添加等待中統計
             if (stats.pendingCount > 0) {
+                const pendingText = `${stats.pendingPercentage}% (${stats.pendingCount})`;
+                const pendingTextClass = stats.pendingPercentage < 15 ? 'option-text outside' : 'option-text';
+
                 html += `
                     <div class="answer-option">
                         <div class="option-label">等待中:</div>
                         <div class="option-bar">
                             <div class="option-fill" style="width: ${stats.pendingPercentage}%; background: #ffc107;">
-                                ${stats.pendingPercentage}% (${stats.pendingCount})
+                                <span class="${pendingTextClass}">${pendingText}</span>
                             </div>
                         </div>
                     </div>
@@ -853,12 +833,15 @@
 
             // 添加超時統計
             if (stats.timeoutCount > 0) {
+                const timeoutText = `${stats.timeoutPercentage}% (${stats.timeoutCount})`;
+                const timeoutTextClass = stats.timeoutPercentage < 15 ? 'option-text outside' : 'option-text';
+
                 html += `
                     <div class="answer-option">
                         <div class="option-label">超時:</div>
                         <div class="option-bar">
                             <div class="option-fill" style="width: ${stats.timeoutPercentage}%; background: #6c757d;">
-                                ${stats.timeoutPercentage}% (${stats.timeoutCount})
+                                <span class="${timeoutTextClass}">${timeoutText}</span>
                             </div>
                         </div>
                     </div>
@@ -1058,10 +1041,9 @@
             const startBtn = document.getElementById('startGameBtn');
             const showResultsBtn = document.getElementById('showResultsBtn');
             const nextQuestionBtn = document.getElementById('nextQuestionBtn');
-            const endGameBtn = document.getElementById('endGameBtn');
 
             // 重置所有按鈕
-            [startBtn, showResultsBtn, nextQuestionBtn, endGameBtn].forEach(btn => {
+            [startBtn, showResultsBtn, nextQuestionBtn].forEach(btn => {
                 btn.disabled = true;
             });
 
@@ -1072,12 +1054,10 @@
 
                 case 'playing':
                     showResultsBtn.disabled = false;
-                    endGameBtn.disabled = false;
                     break;
 
                 case 'showing_results':
                     nextQuestionBtn.disabled = false;
-                    endGameBtn.disabled = false;
                     break;
 
                 case 'finished':
@@ -1134,7 +1114,13 @@
 
         function resetGame() {
             if (confirm('確定要重置遊戲嗎？這將清除所有參與者和進度！')) {
-                location.reload();
+                ws.send({ type: 'admin_reset_game' });
+                addLog('管理員重置遊戲', 'warning');
+
+                // 等待一秒後重新載入頁面
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
             }
         }
 

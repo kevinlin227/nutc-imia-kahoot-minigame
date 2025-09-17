@@ -182,6 +182,10 @@ function handleWebSocketMessage(ws, message) {
       handleEndGame();
       break;
 
+    case 'admin_reset_game':
+      handleResetGame();
+      break;
+
     default:
       ws.send(JSON.stringify({ type: 'error', message: '未知的訊息類型' }));
   }
@@ -515,6 +519,40 @@ function handleEndGame() {
   });
 
   console.log('遊戲結束');
+}
+
+// 處理重置遊戲
+function handleResetGame() {
+  // 重置遊戲狀態
+  gameState.status = 'waiting';
+  gameState.currentQuestion = 0;
+  gameState.questionStartTime = null;
+  gameState.showingResults = false;
+  gameState.allowNewUsers = true;
+  gameState.timeoutUsers.clear();
+
+  // 斷開所有用戶連接並清空用戶列表
+  gameState.users.forEach(user => {
+    if (user.ws && user.ws.readyState === WebSocket.OPEN) {
+      user.ws.send(JSON.stringify({
+        type: 'game_reset',
+        message: '遊戲已被管理員重置，請重新連接'
+      }));
+      user.ws.close();
+    }
+  });
+
+  // 清空用戶列表
+  gameState.users.clear();
+
+  // 通知所有管理員遊戲已重置
+  broadcastToAdmins({
+    type: 'game_reset',
+    gameStatus: gameState.status,
+    users: []
+  });
+
+  console.log('遊戲已重置');
 }
 
 // 處理用戶超時
