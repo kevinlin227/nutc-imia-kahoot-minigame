@@ -206,6 +206,9 @@
             gameState.questions = message.questions;
             gameState.totalQuestions = message.totalQuestions;
 
+            // 更新玩家分數顯示
+            updatePlayerScore(0);
+
             showNotification('成功加入遊戲！', 'success');
         }
 
@@ -213,6 +216,9 @@
         function handleReconnected(message) {
             gameState.userId = message.userId;
             gameState.totalQuestions = message.totalQuestions;
+
+            // 更新玩家分數顯示
+            updatePlayerScore(message.score || 0);
 
             // 根據當前遊戲狀態切換畫面
             if (message.gameStatus === 'playing') {
@@ -429,6 +435,9 @@
 
             const question = gameState.questions[gameState.currentQuestion];
 
+            // 更新右上角的分數顯示
+            updatePlayerScore(message.score);
+
             // 顯示正確答案
             document.getElementById('correctAnswerDisplay').innerHTML =
                 `<div style="color: #28a745; font-weight: bold; font-size: 1.2em;">
@@ -538,6 +547,14 @@
             if (screens[screenName]) {
                 screens[screenName].classList.remove('hidden');
                 gameState.currentScreen = screenName;
+            }
+        }
+
+        // 更新玩家分數顯示
+        function updatePlayerScore(score) {
+            const playerScoreElement = document.getElementById('playerScore');
+            if (playerScoreElement) {
+                playerScoreElement.textContent = `分數: ${score}`;
             }
         }
 
