@@ -7,7 +7,8 @@
       "Bash(taskkill:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(wmic process where:*)"
+      "Bash(wmic process where:*)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": []

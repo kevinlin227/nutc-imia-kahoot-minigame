@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <h1>🎯 Kahoot 問答遊戲</h1>
-        <p style="margin-bottom: 30px; color: #666; font-size: 1.2em;">
+        <p style="margin-bottom: 30px; color: var(--primary-blue); font-size: 1.2em; font-weight: 500;">
             歡迎來到多人即時問答遊戲！<br>
             輸入您的名字開始遊戲
         </p>
@@ -28,9 +28,9 @@
             </button>
         </form>
 
-        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 15px;">
-            <h3 style="color: #333; margin-bottom: 15px;">遊戲規則</h3>
-            <ul style="text-align: left; color: #666; line-height: 1.6;">
+        <div style="margin-top: 30px; padding: 20px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 15px; backdrop-filter: blur(10px);">
+            <h3 style="color: var(--primary-gold); margin-bottom: 15px; font-weight: 600;">遊戲規則</h3>
+            <ul style="text-align: left; color: var(--text-secondary); line-height: 1.6; opacity: 0.9;">
                 <li>每題有4個選項，選擇正確答案獲得分數</li>
                 <li>答題速度越快，獲得分數越高</li>
                 <li>每題限時10秒作答</li>
@@ -40,7 +40,7 @@
         </div>
 
         <div style="margin-top: 20px;">
-            <a href="/admin" style="color: #667eea; text-decoration: none; font-size: 14px;">
+            <a href="/admin" style="color: var(--primary-cyan); text-decoration: none; font-size: 14px; font-weight: 500;">
                 📊 後台管理
             </a>
         </div>
@@ -96,8 +96,8 @@
             .catch(() => {
                 const warning = document.createElement('div');
                 warning.innerHTML = `
-                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; color: #856404;
-                                padding: 15px; border-radius: 10px; margin-top: 20px;">
+                    <div style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); color: #ff6b6b;
+                                padding: 15px; border-radius: 10px; margin-top: 20px; backdrop-filter: blur(5px);">
                         ⚠️ 無法連接到遊戲伺服器，請確認伺服器是否運行中
                     </div>
                 `;
