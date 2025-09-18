@@ -239,10 +239,16 @@
 
         // 處理重連成功
         function handleReconnected(message) {
+            console.log('處理重連成功:', message);
             gameState.userId = message.userId;
             gameState.totalQuestions = message.totalQuestions;
             gameState.questions = message.questions; // 同步題目數據
             gameState.isJoining = false; // 重置加入狀態
+
+            console.log('同步的題目數據:', gameState.questions);
+            console.log('遊戲狀態:', message.gameStatus);
+            console.log('當前題目:', message.currentQuestion);
+            console.log('是否顯示結果:', message.showingResults);
 
             // 確保用戶ID保存在sessionStorage中
             sessionStorage.setItem('gameUserId', gameState.userId);
@@ -254,14 +260,18 @@
             if (message.gameStatus === 'playing') {
                 if (message.showingResults) {
                     // 如果在顯示結果，切換到結果畫面
+                    console.log('切換到結果畫面');
                     switchScreen('results');
                 } else {
                     // 如果在進行遊戲，切換到遊戲畫面
+                    console.log('切換到遊戲畫面並載入題目');
                     switchScreen('game');
                     if (message.currentQuestion >= 0 && gameState.questions.length > 0) {
                         loadQuestion(message.currentQuestion);
                     }
                 }
+            } else {
+                console.log('遊戲狀態不是playing:', message.gameStatus);
             }
 
             showNotification('重連成功！', 'success');
@@ -343,19 +353,47 @@
 
         // 處理題目開始
         function handleQuestionStart(message) {
+            console.log('處理題目開始:', message);
             gameState.currentQuestion = message.questionIndex;
             gameState.questionStartTime = Date.now(); // 使用本地時間
             gameState.selectedAnswer = null;
 
+            console.log('切換到遊戲畫面');
             switchScreen('game');
-            loadQuestion(message.questionIndex);
+
+            // 如果消息中包含題目數據，直接使用它
+            if (message.question) {
+                console.log('使用消息中的題目數據:', message.question);
+                loadQuestionFromData(message.questionIndex, message.question);
+            } else {
+                // 否則從gameState.questions中載入
+                console.log('從gameState載入題目:', message.questionIndex);
+                loadQuestion(message.questionIndex);
+            }
+
             // 使用客戶端10秒計時器
+            console.log('開始計時器');
             startQuestionTimer(10);
         }
 
         // 載入題目
         function loadQuestion(questionIndex) {
+            console.log('載入題目函數被調用:', questionIndex);
+            console.log('當前題目數據:', gameState.questions);
+            console.log('總題目數:', gameState.totalQuestions);
+
+            if (!gameState.questions || gameState.questions.length === 0) {
+                console.error('沒有題目數據!');
+                return;
+            }
+
+            if (questionIndex >= gameState.questions.length) {
+                console.error('題目索引超出範圍:', questionIndex, '總題目數:', gameState.questions.length);
+                return;
+            }
+
             const question = gameState.questions[questionIndex];
+            console.log('載入的題目:', question);
 
             document.getElementById('questionCounter').textContent =
                 `第 ${questionIndex + 1} 題 / 共 ${gameState.totalQuestions} 題`;
@@ -374,6 +412,31 @@
             });
 
             document.getElementById('answerIndicator').textContent = '';
+            console.log('題目載入完成');
+        }
+
+        // 從消息數據載入題目
+        function loadQuestionFromData(questionIndex, questionData) {
+            console.log('從消息數據載入題目:', questionIndex, questionData);
+
+            document.getElementById('questionCounter').textContent =
+                `第 ${questionIndex + 1} 題 / 共 ${gameState.totalQuestions} 題`;
+
+            document.getElementById('questionText').textContent = questionData.question;
+
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            questionData.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => selectAnswer(index));
+                optionsContainer.appendChild(optionElement);
+            });
+
+            document.getElementById('answerIndicator').textContent = '';
+            console.log('從消息數據載入題目完成');
         }
 
         // 選擇答案

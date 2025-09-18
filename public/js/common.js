@@ -83,6 +83,8 @@ class GameWebSocket {
   }
 
   handleMessage(message) {
+    console.log('收到WebSocket消息:', message.type, message);
+
     // 通用訊息處理
     switch (message.type) {
       case 'connected':
@@ -103,7 +105,10 @@ class GameWebSocket {
     // 調用註冊的處理器
     const handler = this.messageHandlers.get(message.type);
     if (handler) {
+      console.log('調用處理器:', message.type);
       handler(message);
+    } else {
+      console.warn('沒有找到處理器:', message.type);
     }
   }
 
