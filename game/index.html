@@ -125,7 +125,8 @@
             selectedAnswer: null,
             questionStartTime: null,
             timers: [],
-            localTimers: [] // 客戶端計時器
+            localTimers: [], // 客戶端計時器
+            isJoining: false // 防止重複加入
         };
 
         // WebSocket連接
@@ -159,12 +160,31 @@
 
             // 設置WebSocket事件處理
             ws.onopen = () => {
-                console.log('WebSocket連接成功，發送加入請求');
+                console.log('WebSocket連接成功，檢查是否有保存的用戶ID');
                 updateConnectionStatus(true);
-                ws.send({
-                    type: 'join',
-                    name: playerName
-                });
+
+                if (gameState.isJoining) {
+                    console.log('正在加入遊戲中，跳過重複請求');
+                    return;
+                }
+
+                gameState.isJoining = true;
+
+                // 檢查是否有保存的用戶ID，如果有則嘗試重連
+                const savedUserId = sessionStorage.getItem('gameUserId');
+                if (savedUserId) {
+                    console.log('發現保存的用戶ID，嘗試重連:', savedUserId);
+                    ws.send({
+                        type: 'reconnect',
+                        userId: savedUserId
+                    });
+                } else {
+                    console.log('沒有保存的用戶ID，發送新加入請求');
+                    ws.send({
+                        type: 'join',
+                        name: playerName
+                    });
+                }
             };
 
             ws.onclose = () => {
@@ -180,6 +200,7 @@
             ws.on('show_results', handleShowResults);
             ws.on('next_question_countdown', handleNextQuestionCountdown);
             ws.on('game_end', handleGameEnd);
+            ws.on('error', handleError);
 
             // 連接WebSocket
             console.log('準備連接WebSocket');
@@ -205,6 +226,10 @@
             gameState.userId = message.userId;
             gameState.questions = message.questions;
             gameState.totalQuestions = message.totalQuestions;
+            gameState.isJoining = false; // 重置加入狀態
+
+            // 保存用戶ID到sessionStorage，用於頁面重載時重連
+            sessionStorage.setItem('gameUserId', gameState.userId);
 
             // 更新玩家分數顯示
             updatePlayerScore(0);
@@ -216,6 +241,11 @@
         function handleReconnected(message) {
             gameState.userId = message.userId;
             gameState.totalQuestions = message.totalQuestions;
+            gameState.questions = message.questions; // 同步題目數據
+            gameState.isJoining = false; // 重置加入狀態
+
+            // 確保用戶ID保存在sessionStorage中
+            sessionStorage.setItem('gameUserId', gameState.userId);
 
             // 更新玩家分數顯示
             updatePlayerScore(message.score || 0);
@@ -228,7 +258,9 @@
                 } else {
                     // 如果在進行遊戲，切換到遊戲畫面
                     switchScreen('game');
-                    loadQuestion(message.currentQuestion);
+                    if (message.currentQuestion >= 0 && gameState.questions.length > 0) {
+                        loadQuestion(message.currentQuestion);
+                    }
                 }
             }
 
@@ -538,6 +570,35 @@
             });
         }
 
+        // 處理錯誤訊息
+        function handleError(message) {
+            console.log('遊戲頁面收到錯誤:', message.message);
+
+            // 如果是用戶不存在的錯誤，清除保存的用戶ID並重新以新用戶身份加入
+            if (message.message === '用戶不存在' && !gameState.isJoining) {
+                console.log('用戶不存在，清除保存的ID並重新加入');
+                sessionStorage.removeItem('gameUserId');
+                gameState.isJoining = true;
+
+                // 重新發送加入請求
+                const urlParams = new URLSearchParams(window.location.search);
+                const playerName = urlParams.get('name') || sessionStorage.getItem('playerName');
+
+                if (playerName) {
+                    setTimeout(() => {
+                        ws.send({
+                            type: 'join',
+                            name: playerName
+                        });
+                    }, 100); // 稍微延遲避免衝突
+                }
+            } else {
+                // 其他錯誤顯示通知
+                showNotification(message.message, 'error');
+                gameState.isJoining = false; // 重置狀態
+            }
+        }
+
         // 切換畫面
         function switchScreen(screenName) {
             Object.values(screens).forEach(screen => {
@@ -574,6 +635,7 @@
 
         // 回到主頁
         function goHome() {
+            sessionStorage.removeItem('gameUserId');
             ws.close();
             window.location.href = '/home';
         }

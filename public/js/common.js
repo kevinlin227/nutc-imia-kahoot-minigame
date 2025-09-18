@@ -7,6 +7,7 @@ class GameWebSocket {
     this.reconnectDelay = 1000;
     this.userId = sessionStorage.getItem('gameUserId');
     this.messageHandlers = new Map();
+    this.autoReconnect = false; // 暫時禁用自動重連
 
     // 為當前分頁生成唯一標識符
     if (!sessionStorage.getItem('tabId')) {
@@ -54,8 +55,8 @@ class GameWebSocket {
         this.onclose();
       }
 
-      // 自動重連
-      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      // 自動重連（如果啟用）
+      if (this.autoReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
         setTimeout(() => {
           this.reconnectAttempts++;
           console.log(`嘗試重連 (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
@@ -95,7 +96,7 @@ class GameWebSocket {
 
       case 'error':
         console.error('伺服器錯誤:', message.message);
-        showNotification(message.message, 'error');
+        // 錯誤處理交給具體頁面處理，這裡只記錄日誌
         break;
     }
 

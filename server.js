@@ -261,7 +261,12 @@ function handleUserReconnect(ws, message) {
     currentQuestion: gameState.currentQuestion,
     score: user.score,
     showingResults: gameState.showingResults,
-    totalQuestions: questions.length
+    totalQuestions: questions.length,
+    questions: questions.map(q => ({
+      question: q.question,
+      options: q.options,
+      timeLimit: q.timeLimit
+    })) // 不包含答案
   }));
 
   // 廣播用戶列表更新
