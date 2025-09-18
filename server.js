@@ -253,8 +253,8 @@ function handleUserReconnect(ws, message) {
   user.ws = ws;
   user.lastSeen = Date.now();
 
-  // 發送重連成功訊息和當前遊戲狀態
-  ws.send(JSON.stringify({
+  // 準備重連響應數據
+  const reconnectData = {
     type: 'reconnected',
     userId: user.id,
     gameStatus: gameState.status,
@@ -267,7 +267,40 @@ function handleUserReconnect(ws, message) {
       options: q.options,
       timeLimit: q.timeLimit
     })) // 不包含答案
-  }));
+  };
+
+  // 如果正在顯示結果，包含結果數據
+  if (gameState.showingResults && gameState.currentQuestion >= 0) {
+    const currentQuestion = questions[gameState.currentQuestion];
+    const userAnswer = user.answers.find(a => a.questionIndex === gameState.currentQuestion);
+
+    // 計算排行榜
+    const leaderboard = Array.from(gameState.users.values())
+      .sort((a, b) => {
+        if (a.score !== b.score) return b.score - a.score;
+        return a.totalTime - b.totalTime;
+      })
+      .map((u, index) => ({
+        rank: index + 1,
+        id: u.id,
+        name: u.name,
+        score: u.score
+      }));
+
+    const userRank = leaderboard.findIndex(item => item.id === user.id) + 1;
+    const gap = userRank > 1 ? leaderboard[userRank - 2].score - user.score : 0;
+
+    reconnectData.resultData = {
+      correctAnswer: currentQuestion.correctAnswer,
+      userAnswer: userAnswer ? userAnswer.answer : null,
+      leaderboard: leaderboard,
+      rank: userRank,
+      gap: gap
+    };
+  }
+
+  // 發送重連成功訊息和當前遊戲狀態
+  ws.send(JSON.stringify(reconnectData));
 
   // 廣播用戶列表更新
   broadcast({

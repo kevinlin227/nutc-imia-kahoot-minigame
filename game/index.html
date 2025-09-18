@@ -259,15 +259,20 @@
             // 根據當前遊戲狀態切換畫面
             if (message.gameStatus === 'playing') {
                 if (message.showingResults) {
-                    // 如果在顯示結果，切換到結果畫面
-                    console.log('切換到結果畫面');
+                    // 如果在顯示結果，切換到結果畫面並重建結果內容
+                    console.log('切換到結果畫面並重建結果');
                     switchScreen('results');
+                    if (message.resultData) {
+                        rebuildResultsScreen(message.resultData, message.currentQuestion);
+                    }
                 } else {
-                    // 如果在進行遊戲，切換到遊戲畫面
-                    console.log('切換到遊戲畫面並載入題目');
+                    // 如果在進行遊戲，切換到遊戲畫面但顯示重連等待狀態
+                    console.log('切換到遊戲畫面並顯示重連等待');
                     switchScreen('game');
                     if (message.currentQuestion >= 0 && gameState.questions.length > 0) {
                         loadQuestion(message.currentQuestion);
+                        // 顯示重連等待狀態而不是重新開始計時器
+                        showReconnectedWaitingState();
                     }
                 }
             } else {
@@ -680,6 +685,77 @@
             if (playerScoreElement) {
                 playerScoreElement.textContent = `分數: ${score}`;
             }
+        }
+
+        // 顯示重連後的等待狀態
+        function showReconnectedWaitingState() {
+            console.log('顯示重連等待狀態');
+
+            // 停止計時器顯示
+            const timerElement = document.getElementById('gameTimer');
+            timerElement.textContent = '重連中';
+            timerElement.style.color = '#6c757d';
+            timerElement.style.animation = '';
+
+            // 禁用選項
+            const options = document.querySelectorAll('.option');
+            options.forEach(option => {
+                option.style.pointerEvents = 'none';
+                option.style.opacity = '0.6';
+            });
+
+            // 顯示等待提示
+            document.getElementById('answerIndicator').innerHTML =
+                '<div style="color: #6c757d; font-style: italic;">⏳ 斷線重連，等待此題結束...</div>';
+        }
+
+        // 重建結果畫面
+        function rebuildResultsScreen(resultData, questionIndex) {
+            console.log('重建結果畫面:', resultData, questionIndex);
+
+            const question = gameState.questions[questionIndex];
+            if (!question) {
+                console.error('找不到題目數據:', questionIndex);
+                return;
+            }
+
+            // 從重連消息中獲取當前分數
+            const currentScore = gameState.userId && Array.from(gameState.users?.values() || [])
+                .find(u => u.id === gameState.userId)?.score || 0;
+
+            // 顯示正確答案
+            document.getElementById('correctAnswerDisplay').innerHTML =
+                `<div style="color: #28a745; font-weight: bold; font-size: 1.2em;">
+                    正確答案: ${question.options[resultData.correctAnswer]}
+                </div>`;
+
+            // 顯示用戶答案
+            if (resultData.userAnswer !== null) {
+                const isCorrect = resultData.userAnswer === resultData.correctAnswer;
+                document.getElementById('userAnswerDisplay').innerHTML =
+                    `<div style="color: ${isCorrect ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                        您的答案: ${question.options[resultData.userAnswer]} ${isCorrect ? '✓' : '✗'}
+                    </div>`;
+            } else {
+                document.getElementById('userAnswerDisplay').innerHTML =
+                    `<div style="color: #999;">您未作答或重連錯過此題</div>`;
+            }
+
+            // 顯示分數和排名
+            document.getElementById('currentScore').textContent = `分數: ${currentScore}`;
+            document.getElementById('currentRank').textContent = `排名: 第 ${resultData.rank} 名`;
+
+            if (resultData.gap > 0) {
+                document.getElementById('rankGap').textContent =
+                    `距離前一名還差 ${resultData.gap} 分`;
+            } else {
+                document.getElementById('rankGap').textContent = '';
+            }
+
+            // 顯示排行榜
+            displayLeaderboard(resultData.leaderboard);
+
+            console.log('結果畫面重建完成');
         }
 
         // 清除所有計時器
