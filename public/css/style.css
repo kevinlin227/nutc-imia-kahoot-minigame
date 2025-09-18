@@ -6,7 +6,7 @@
 
 body {
   font-family: 'Arial', sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #5fd8d6 0%, #5cb8e3 100%);
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -47,11 +47,11 @@ input[type="text"] {
 
 input[type="text"]:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #5cb8e3;
 }
 
 button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #5fd8d6 0%, #5cb8e3 100%);
   color: white;
   border: none;
   padding: 15px 30px;
@@ -105,13 +105,13 @@ button:disabled {
 }
 
 .option:hover {
-  border-color: #667eea;
-  background: #f0f4ff;
+  border-color: #5cb8e3;
+  background: #f0fbff;
 }
 
 .option.selected {
-  border-color: #667eea;
-  background: #667eea;
+  border-color: #5cb8e3;
+  background: #5cb8e3;
   color: white;
 }
 
@@ -136,7 +136,7 @@ button:disabled {
 
 .countdown {
   font-size: 5em;
-  color: #667eea;
+  color: #5cb8e3;
   margin: 30px 0;
   font-weight: bold;
 }
@@ -164,7 +164,7 @@ button:disabled {
 
 .score-display {
   font-size: 1.5em;
-  color: #667eea;
+  color: #5cb8e3;
   margin: 20px 0;
   font-weight: bold;
 }
