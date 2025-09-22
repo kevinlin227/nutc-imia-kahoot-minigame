@@ -43,6 +43,12 @@ try {
           reconnectButtonText: "🚀 重新連接",
           newGameHint: "如要開始新遊戲，請使用下方的輸入框重新輸入名字"
         }
+      },
+      footer: {
+        enabled: true,
+        text: "由 Your Name 開發",
+        link: "",
+        linkText: ""
       }
     },
     scoring: {
@@ -156,7 +162,8 @@ app.get('/api/config', (req, res) => {
       endGameSubMessage: config.ui.endGameSubMessage,
       showLeaderboard: config.ui.showLeaderboard,
       showTopThree: config.ui.showTopThree,
-      home: config.ui.home
+      home: config.ui.home,
+      footer: config.ui.footer
     }
   });
 });
