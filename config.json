@@ -1,16 +1,16 @@
 {
   "game": {
-    "name": "知識競賽遊戲",
+    "name": "中科冷知識大挑戰",
     "startCountdown": 3,
     "nextQuestionCountdown": 3
   },
   "ui": {
-    "endGameMessage": "感謝參與本次知識競賽！",
-    "endGameSubMessage": "希望你在遊戲中學到了新知識。",
+    "endGameMessage": "感謝參與中科冷知識大挑戰！",
+    "endGameSubMessage": "希望能幫助你更認識中科大 :D",
     "showLeaderboard": false,
     "showTopThree": false,
     "home": {
-      "welcomeMessage": "歡迎來到多人即時問答遊戲！",
+      "welcomeMessage": "歡迎來到中科冷知識大挑戰！",
       "welcomeSubMessage": "輸入您的名字開始遊戲",
       "nameInputPlaceholder": "請輸入您的名字",
       "startButtonText": "🚀 開始遊戲",
