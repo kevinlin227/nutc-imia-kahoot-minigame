@@ -5,7 +5,7 @@ const fs = require('fs');
 // UUID使用簡單的隨機字符串生成
 
 const app = express();
-const PORT = 80;
+const PORT = 8080;
 
 // 從JSON文件載入配置
 let config = {};

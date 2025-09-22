@@ -9,7 +9,7 @@
 - **Node.js** - 主要運行環境
 - **ws** - WebSocket庫，用於實時通訊
 - **express** - HTTP伺服器，用於靜態文件服務
-- **監聽端口**: 80
+- **監聽端口**: 8080
 
 ### 前端技術
 - **原生JavaScript** - 客戶端邏輯
@@ -301,9 +301,9 @@ npm start
 ```
 
 伺服器啟動後，訪問以下網址：
-- 主頁：http://localhost
-- 遊戲頁面：http://localhost/game
-- 後台管理：http://localhost/admin
+- 主頁：http://localhost:8080
+- 遊戲頁面：http://localhost:8080/game
+- 後台管理：http://localhost:8080/admin
 
 ### 生產環境
 - 使用PM2或類似工具管理進程
