@@ -26,12 +26,6 @@
         "reconnectButtonText": "🚀 重新連接",
         "newGameHint": "如要開始新遊戲，請使用下方的輸入框重新輸入名字"
       }
-    },
-    "footer": {
-      "enabled": true,
-      "text": "由 Ting 開發 有興趣的話可以點這裡查看我的ig限動，今天會將這個項目開源",
-      "link": "https://www.instagram.com/tingcoding/",
-      "linkText": ""
     }
   },
   "scoring": {

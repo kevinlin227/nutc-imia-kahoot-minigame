@@ -110,17 +110,6 @@
                 <button onclick="playAgain()">🔄 再玩一次</button>
                 <button onclick="goHome()" style="background: #6c757d;">🏠 回到主頁</button>
             </div>
-
-            <!-- 廣告/署名區域 -->
-            <div id="gameFooter" style="
-                margin-top: 40px;
-                padding-top: 20px;
-                border-top: 1px solid #eee;
-                text-align: center;
-                font-size: 12px;
-                color: #888;
-                opacity: 0.7;
-            "></div>
         </div>
     </div>
 
@@ -699,24 +688,6 @@
                 buttonsContainer.style.display = 'none';
             } else {
                 buttonsContainer.style.display = 'block';
-            }
-
-            // 顯示footer廣告/署名
-            const footerContainer = document.getElementById('gameFooter');
-            if (config.footer && config.footer.enabled) {
-                let footerContent = config.footer.text;
-
-                // 如果有連結，包裝為連結
-                if (config.footer.link && config.footer.linkText) {
-                    footerContent = `<a href="${config.footer.link}" target="_blank" style="color: #888; text-decoration: none;">${config.footer.linkText}</a>`;
-                } else if (config.footer.link && config.footer.text) {
-                    footerContent = `<a href="${config.footer.link}" target="_blank" style="color: #888; text-decoration: none;">${config.footer.text}</a>`;
-                }
-
-                footerContainer.innerHTML = footerContent;
-                footerContainer.style.display = 'block';
-            } else {
-                footerContainer.style.display = 'none';
             }
         }
 
