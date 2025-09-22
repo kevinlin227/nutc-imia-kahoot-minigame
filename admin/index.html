@@ -637,6 +637,8 @@
         function handleAdminNextQuestionCountdown(message) {
             hideAllCountdowns();
             showNextQuestionCountdown(message.countdown);
+            // 確保倒數期間下一題按鈕保持禁用
+            document.getElementById('nextQuestionBtn').disabled = true;
         }
 
         // 處理作答統計更新
@@ -702,15 +704,21 @@
             hideAllCountdowns();
             const countdown = document.getElementById('nextQuestionCountdown');
             const valueElement = document.getElementById('nextQuestionCountdownValue');
+            const nextQuestionBtn = document.getElementById('nextQuestionBtn');
 
             countdown.classList.add('active');
             valueElement.textContent = seconds;
+
+            // 確保下一題按鈕在倒數期間保持禁用
+            nextQuestionBtn.disabled = true;
 
             const interval = setInterval(() => {
                 seconds--;
                 if (seconds <= 0) {
                     clearInterval(interval);
                     countdown.classList.remove('active');
+                    // 倒數結束後，根據遊戲狀態更新按鈕狀態
+                    updateControlButtons();
                 } else {
                     valueElement.textContent = seconds;
                 }
@@ -1101,6 +1109,10 @@
         }
 
         function nextQuestion() {
+            // 禁用下一題按鈕，防止重複點擊
+            const nextQuestionBtn = document.getElementById('nextQuestionBtn');
+            nextQuestionBtn.disabled = true;
+
             ws.send({ type: 'admin_next_question' });
             addLog('管理員進入下一題', 'warning');
         }
