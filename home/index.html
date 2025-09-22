@@ -86,6 +86,9 @@
         function showReconnectionOption(userName) {
             const form = document.getElementById('joinForm');
 
+            // 檢查userName是否為有效值
+            const displayName = userName && userName !== 'undefined' ? userName : '未知玩家';
+
             // 創建重連區域
             const reconnectDiv = document.createElement('div');
             reconnectDiv.id = 'reconnectSection';
@@ -100,26 +103,22 @@
             reconnectDiv.innerHTML = `
                 <h3 style="color: #155724; margin-top: 0;">🔄 發現未完成的遊戲</h3>
                 <p style="color: #155724; margin-bottom: 15px;">
-                    玩家: <strong>${userName}</strong><br>
+                    玩家: <strong>${displayName}</strong><br>
                     您可以重新連接到正在進行的遊戲
                 </p>
                 <button type="button" id="reconnectBtn" style="
                     background: #28a745;
                     color: white;
                     border: none;
-                    padding: 12px 20px;
+                    padding: 15px 25px;
                     border-radius: 8px;
                     cursor: pointer;
-                    margin-right: 10px;
+                    font-size: 16px;
+                    font-weight: bold;
                 ">🚀 重新連接</button>
-                <button type="button" id="newGameBtn" style="
-                    background: #6c757d;
-                    color: white;
-                    border: none;
-                    padding: 12px 20px;
-                    border-radius: 8px;
-                    cursor: pointer;
-                ">🆕 開始新遊戲</button>
+                <p style="color: #666; margin-top: 15px; font-size: 14px;">
+                    如要開始新遊戲，請使用下方的輸入框重新輸入名字
+                </p>
             `;
 
             form.parentNode.insertBefore(reconnectDiv, form);
@@ -127,13 +126,6 @@
             // 設置事件監聽器
             document.getElementById('reconnectBtn').addEventListener('click', () => {
                 window.location.href = `/game?reconnect=true`;
-            });
-
-            document.getElementById('newGameBtn').addEventListener('click', () => {
-                // 清除保存的遊戲資料
-                localStorage.removeItem('gameUserId');
-                localStorage.removeItem('gameUserName');
-                reconnectDiv.remove();
             });
         }
 
@@ -151,8 +143,18 @@
                 return;
             }
 
+            // 清除舊的遊戲資料，因為要開始新遊戲
+            localStorage.removeItem('gameUserId');
+            localStorage.removeItem('gameUserName');
+
             // 保存名字（僅當前分頁）
             sessionStorage.setItem('playerName', name);
+
+            // 移除重連提示區域（如果存在）
+            const reconnectSection = document.getElementById('reconnectSection');
+            if (reconnectSection) {
+                reconnectSection.remove();
+            }
 
             // 跳轉到遊戲頁面
             window.location.href = `/game?name=${encodeURIComponent(name)}`;
