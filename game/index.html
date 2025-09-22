@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kahoot 遊戲</title>
+    <title id="pageTitle">遊戲</title>
     <link rel="stylesheet" href="/public/css/style.css">
 </head>
 <body>
@@ -106,7 +106,7 @@
                 <div id="topThreeContainer"></div>
             </div>
 
-            <div style="margin-top: 30px;">
+            <div id="gameEndButtons" style="margin-top: 30px;">
                 <button onclick="playAgain()">🔄 再玩一次</button>
                 <button onclick="goHome()" style="background: #6c757d;">🏠 回到主頁</button>
             </div>
@@ -115,6 +115,22 @@
 
     <script src="/public/js/common.js"></script>
     <script>
+        // 載入遊戲配置
+        async function loadGameConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+
+                // 更新頁面標題
+                document.getElementById('pageTitle').textContent = config.gameName;
+                document.title = config.gameName;
+            } catch (error) {
+                console.log('無法載入遊戲配置，使用預設值');
+            }
+        }
+
+        // 載入配置
+        loadGameConfig();
         // 遊戲狀態
         const gameState = {
             currentScreen: 'waiting',
@@ -146,7 +162,8 @@
         function init() {
             console.log('遊戲頁面初始化開始');
             const urlParams = new URLSearchParams(window.location.search);
-            const playerName = urlParams.get('name') || sessionStorage.getItem('playerName');
+            const isReconnecting = urlParams.get('reconnect') === 'true';
+            const playerName = urlParams.get('name') || sessionStorage.getItem('playerName') || localStorage.getItem('gameUserName');
 
             console.log('玩家名稱:', playerName);
 
@@ -171,8 +188,8 @@
                 gameState.isJoining = true;
 
                 // 檢查是否有保存的用戶ID，如果有則嘗試重連
-                const savedUserId = sessionStorage.getItem('gameUserId');
-                if (savedUserId) {
+                const savedUserId = localStorage.getItem('gameUserId');
+                if (savedUserId && (isReconnecting || localStorage.getItem('gameUserName'))) {
                     console.log('發現保存的用戶ID，嘗試重連:', savedUserId);
                     ws.send({
                         type: 'reconnect',
@@ -180,6 +197,9 @@
                     });
                 } else {
                     console.log('沒有保存的用戶ID，發送新加入請求');
+                    // 清除舊的遊戲資料（開始新遊戲）
+                    localStorage.removeItem('gameUserId');
+                    localStorage.removeItem('gameUserName');
                     ws.send({
                         type: 'join',
                         name: playerName
@@ -228,8 +248,9 @@
             gameState.totalQuestions = message.totalQuestions;
             gameState.isJoining = false; // 重置加入狀態
 
-            // 保存用戶ID到sessionStorage，用於頁面重載時重連
-            sessionStorage.setItem('gameUserId', gameState.userId);
+            // 保存用戶ID和名稱到localStorage，用於斷線重連
+            localStorage.setItem('gameUserId', gameState.userId);
+            localStorage.setItem('gameUserName', message.name || gameState.playerName);
 
             // 更新玩家分數顯示
             updatePlayerScore(0);
@@ -250,8 +271,8 @@
             console.log('當前題目:', message.currentQuestion);
             console.log('是否顯示結果:', message.showingResults);
 
-            // 確保用戶ID保存在sessionStorage中
-            sessionStorage.setItem('gameUserId', gameState.userId);
+            // 確保用戶ID保存在localStorage中
+            localStorage.setItem('gameUserId', gameState.userId);
 
             // 更新玩家分數顯示
             updatePlayerScore(message.score || 0);
@@ -612,30 +633,62 @@
         function handleGameEnd(message) {
             switchScreen('final');
 
-            document.getElementById('finalScore').textContent = `最終分數: ${message.finalScore}`;
-            document.getElementById('finalRank').textContent = `最終排名: 第 ${message.finalRank} 名`;
+            // 清除遊戲資料，因為遊戲已結束
+            localStorage.removeItem('gameUserId');
+            localStorage.removeItem('gameUserName');
 
-            // 顯示前三名
+            const config = message.config || {};
+
+            // 根據配置決定是否顯示分數和排名
+            if (config.showLeaderboard !== false) {
+                document.getElementById('finalScore').textContent = `最終分數: ${message.finalScore}`;
+                document.getElementById('finalRank').textContent = `最終排名: 第 ${message.finalRank} 名`;
+            } else {
+                document.getElementById('finalScore').textContent = `您的分數: ${message.finalScore}`;
+                document.getElementById('finalRank').style.display = 'none';
+            }
+
+            // 根據配置決定是否顯示前三名
             const container = document.getElementById('topThreeContainer');
             container.innerHTML = '';
 
-            message.topThree.forEach((player, index) => {
-                const rank = index + 1;
-                const emoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
+            if (config.showTopThree !== false && message.topThree && message.topThree.length > 0) {
+                message.topThree.forEach((player, index) => {
+                    const rank = index + 1;
+                    const emoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
 
-                const itemElement = document.createElement('div');
-                itemElement.className = 'leaderboard-item top3';
-                itemElement.innerHTML = `
-                    <div style="font-size: 1.2em;">
-                        ${emoji} ${player.name}
-                        ${player.id === gameState.userId ? ' (您)' : ''}
-                    </div>
-                    <div style="font-size: 1.2em; font-weight: bold;">
-                        ${player.score} 分
-                    </div>
+                    const itemElement = document.createElement('div');
+                    itemElement.className = 'leaderboard-item top3';
+                    itemElement.innerHTML = `
+                        <div style="font-size: 1.2em;">
+                            ${emoji} ${player.name}
+                            ${player.id === gameState.userId ? ' (您)' : ''}
+                        </div>
+                        <div style="font-size: 1.2em; font-weight: bold;">
+                            ${player.score} 分
+                        </div>
+                    `;
+                    container.appendChild(itemElement);
+                });
+            } else {
+                // 顯示自訂結尾訊息
+                const messageDiv = document.createElement('div');
+                messageDiv.style.cssText = 'text-align: center; padding: 30px; background: #f8f9fa; border-radius: 15px; margin: 20px 0;';
+                messageDiv.innerHTML = `
+                    <h2 style="color: #667eea; margin-bottom: 15px;">${config.endGameMessage || '感謝參與本次知識競賽！'}</h2>
+                    <p style="color: #666; font-size: 1.1em;">${config.endGameSubMessage || '希望你在遊戲中學到了新知識。'}</p>
                 `;
-                container.appendChild(itemElement);
-            });
+                container.appendChild(messageDiv);
+            }
+
+            // 根據配置決定是否顯示原本的按鈕
+            const buttonsContainer = document.getElementById('gameEndButtons');
+            if (config.showLeaderboard === false && config.showTopThree === false) {
+                // 隱藏原本的按鈕，只顯示自訂結尾訊息
+                buttonsContainer.style.display = 'none';
+            } else {
+                buttonsContainer.style.display = 'block';
+            }
         }
 
         // 處理錯誤訊息
@@ -645,7 +698,8 @@
             // 如果是用戶不存在的錯誤，清除保存的用戶ID並重新以新用戶身份加入
             if (message.message === '用戶不存在' && !gameState.isJoining) {
                 console.log('用戶不存在，清除保存的ID並重新加入');
-                sessionStorage.removeItem('gameUserId');
+                localStorage.removeItem('gameUserId');
+                localStorage.removeItem('gameUserName');
                 gameState.isJoining = true;
 
                 // 重新發送加入請求
@@ -768,13 +822,15 @@
 
         // 再玩一次
         function playAgain() {
-            sessionStorage.removeItem('gameUserId');
+            localStorage.removeItem('gameUserId');
+            localStorage.removeItem('gameUserName');
             window.location.reload();
         }
 
         // 回到主頁
         function goHome() {
-            sessionStorage.removeItem('gameUserId');
+            localStorage.removeItem('gameUserId');
+            localStorage.removeItem('gameUserName');
             ws.close();
             window.location.href = '/home';
         }

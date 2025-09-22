@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kahoot 遊戲 - 後台管理</title>
+    <title id="pageTitle">遊戲 - 後台管理</title>
     <link rel="stylesheet" href="/public/css/style.css">
     <style>
         .admin-container {
@@ -382,7 +382,7 @@
 <body>
     <div class="admin-container">
         <div class="admin-panel">
-            <h1>🎮 Kahoot 遊戲後台管理</h1>
+            <h1 id="gameTitle">🎮 遊戲後台管理</h1>
 
             <!-- 遊戲狀態總覽 -->
             <div class="status-panel">
@@ -511,8 +511,25 @@
         // WebSocket連接
         const ws = new GameWebSocket();
 
+        // 載入遊戲配置
+        async function loadGameConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+
+                // 更新頁面標題和遊戲名稱
+                document.getElementById('pageTitle').textContent = `${config.gameName} - 後台管理`;
+                document.getElementById('gameTitle').textContent = `🎮 ${config.gameName}後台管理`;
+                document.title = `${config.gameName} - 後台管理`;
+            } catch (error) {
+                console.log('無法載入遊戲配置，使用預設值');
+            }
+        }
+
         // 初始化
         function init() {
+            // 載入配置
+            loadGameConfig();
             // 設置WebSocket事件處理
             ws.onopen = () => {
                 addLog('已連接到遊戲伺服器', 'info');

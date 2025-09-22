@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kahoot 遊戲 - 主頁</title>
+    <title id="pageTitle">遊戲 - 主頁</title>
     <link rel="stylesheet" href="/public/css/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>🎯 Kahoot 問答遊戲</h1>
+        <h1 id="gameTitle">🎯 問答遊戲</h1>
         <p style="margin-bottom: 30px; color: #666; font-size: 1.2em;">
             歡迎來到多人即時問答遊戲！<br>
             輸入您的名字開始遊戲
@@ -47,6 +47,27 @@
     </div>
 
     <script>
+        // 載入遊戲配置
+        async function loadGameConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+
+                // 更新頁面標題和遊戲名稱
+                document.getElementById('pageTitle').textContent = `${config.gameName} - 主頁`;
+                document.getElementById('gameTitle').textContent = `🎯 ${config.gameName}`;
+                document.title = `${config.gameName} - 主頁`;
+            } catch (error) {
+                console.log('無法載入遊戲配置，使用預設值');
+            }
+        }
+
+        // 載入配置
+        loadGameConfig();
+
+        // 檢查重連
+        checkForReconnection();
+
         const form = document.getElementById('joinForm');
         const nameInput = document.getElementById('playerName');
         const joinButton = document.getElementById('joinButton');
@@ -55,6 +76,72 @@
         const savedName = sessionStorage.getItem('playerName');
         if (savedName) {
             nameInput.value = savedName;
+        }
+
+        // 檢查是否有正在進行的遊戲（斷線重連）
+        function checkForReconnection() {
+            const savedUserId = localStorage.getItem('gameUserId');
+            const savedUserName = localStorage.getItem('gameUserName');
+
+            if (savedUserId && savedUserName) {
+                // 顯示重連選項
+                showReconnectionOption(savedUserName);
+            }
+        }
+
+        // 顯示重連選項
+        function showReconnectionOption(userName) {
+            const form = document.getElementById('joinForm');
+
+            // 創建重連區域
+            const reconnectDiv = document.createElement('div');
+            reconnectDiv.id = 'reconnectSection';
+            reconnectDiv.style.cssText = `
+                margin-bottom: 30px;
+                padding: 20px;
+                background: #e8f5e8;
+                border-radius: 15px;
+                border-left: 4px solid #28a745;
+            `;
+
+            reconnectDiv.innerHTML = `
+                <h3 style="color: #155724; margin-top: 0;">🔄 發現未完成的遊戲</h3>
+                <p style="color: #155724; margin-bottom: 15px;">
+                    玩家: <strong>${userName}</strong><br>
+                    您可以重新連接到正在進行的遊戲
+                </p>
+                <button type="button" id="reconnectBtn" style="
+                    background: #28a745;
+                    color: white;
+                    border: none;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    margin-right: 10px;
+                ">🚀 重新連接</button>
+                <button type="button" id="newGameBtn" style="
+                    background: #6c757d;
+                    color: white;
+                    border: none;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                ">🆕 開始新遊戲</button>
+            `;
+
+            form.parentNode.insertBefore(reconnectDiv, form);
+
+            // 設置事件監聽器
+            document.getElementById('reconnectBtn').addEventListener('click', () => {
+                window.location.href = `/game?reconnect=true`;
+            });
+
+            document.getElementById('newGameBtn').addEventListener('click', () => {
+                // 清除保存的遊戲資料
+                localStorage.removeItem('gameUserId');
+                localStorage.removeItem('gameUserName');
+                reconnectDiv.remove();
+            });
         }
 
         form.addEventListener('submit', (e) => {

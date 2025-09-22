@@ -7,6 +7,35 @@ const fs = require('fs');
 const app = express();
 const PORT = 80;
 
+// 從JSON文件載入配置
+let config = {};
+try {
+  const configData = fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8');
+  config = JSON.parse(configData);
+  console.log('成功載入遊戲配置');
+} catch (error) {
+  console.error('載入配置失敗，使用預設值:', error);
+  config = {
+    game: {
+      name: "知識競賽遊戲",
+      questionTimeLimit: 10,
+      startCountdown: 3,
+      nextQuestionCountdown: 3
+    },
+    ui: {
+      endGameMessage: "感謝參與本次知識競賽！",
+      endGameSubMessage: "希望你在遊戲中學到了新知識。",
+      showLeaderboard: false,
+      showTopThree: false
+    },
+    scoring: {
+      baseScore: 100,
+      maxTimeBonus: 50,
+      minTimeBonus: 10
+    }
+  };
+}
+
 // 從JSON文件載入題目
 let questions = [];
 try {
@@ -38,8 +67,11 @@ function generateUserId() {
 function calculateScore(isCorrect, timeSpent, rank) {
   if (!isCorrect) return 0;
 
-  const baseScore = 100;
-  const speedBonus = Math.max(50 - (rank - 1) * 10, 10);
+  const baseScore = config.scoring.baseScore;
+  const speedBonus = Math.max(
+    config.scoring.maxTimeBonus - (rank - 1) * 10,
+    config.scoring.minTimeBonus
+  );
 
   return baseScore + speedBonus;
 }
@@ -96,6 +128,19 @@ app.use('/admin', express.static(path.join(__dirname, 'admin')));
 // 根路由重定向到主頁
 app.get('/', (req, res) => {
   res.redirect('/home');
+});
+
+// 提供配置信息API
+app.get('/api/config', (req, res) => {
+  res.json({
+    gameName: config.game.name,
+    ui: {
+      endGameMessage: config.ui.endGameMessage,
+      endGameSubMessage: config.ui.endGameSubMessage,
+      showLeaderboard: config.ui.showLeaderboard,
+      showTopThree: config.ui.showTopThree
+    }
+  });
 });
 
 // 創建HTTP伺服器
@@ -394,19 +439,19 @@ function handleStartGame() {
   // 發送遊戲開始倒計時
   broadcast({
     type: 'game_starting',
-    countdown: 3
+    countdown: config.game.startCountdown
   });
 
   // 向管理員發送遊戲開始倒計時
   broadcastToAdmins({
     type: 'admin_game_starting',
-    countdown: 3
+    countdown: config.game.startCountdown
   });
 
-  // 3秒後開始第一題
+  // 配置秒數後開始第一題
   setTimeout(() => {
     startQuestion(0);
-  }, 3000);
+  }, config.game.startCountdown * 1000);
 
   console.log('遊戲開始');
 }
@@ -422,12 +467,14 @@ function startQuestion(questionIndex) {
 
   const question = questions[questionIndex];
 
+  const timeLimit = question.timeLimit || (config.game.questionTimeLimit * 1000);
+
   broadcast({
     type: 'question_start',
     question: {
       question: question.question,
       options: question.options,
-      timeLimit: question.timeLimit
+      timeLimit: timeLimit
     },
     questionIndex: questionIndex
   });
@@ -437,7 +484,7 @@ function startQuestion(questionIndex) {
     type: 'admin_question_start',
     questionIndex: questionIndex,
     question: question,
-    timeLimit: question.timeLimit
+    timeLimit: timeLimit
   });
 
   // 啟動管理員統計更新
@@ -467,19 +514,19 @@ function handleNextQuestion() {
   // 發送下一題倒計時
   broadcast({
     type: 'next_question_countdown',
-    countdown: 3
+    countdown: config.game.nextQuestionCountdown
   });
 
   // 向管理員發送下一題倒計時
   broadcastToAdmins({
     type: 'admin_next_question_countdown',
-    countdown: 3
+    countdown: config.game.nextQuestionCountdown
   });
 
-  // 3秒後開始下一題
+  // 配置秒數後開始下一題
   setTimeout(() => {
     startQuestion(nextIndex);
-  }, 3000);
+  }, config.game.nextQuestionCountdown * 1000);
 }
 
 // 處理顯示結果
@@ -542,7 +589,7 @@ function handleEndGame() {
   gameState.status = 'finished';
 
   const finalLeaderboard = getLeaderboard();
-  const topThree = finalLeaderboard.slice(0, 3);
+  const topThree = config.ui.showTopThree ? finalLeaderboard.slice(0, 3) : [];
 
   // 發送最終結果給每個用戶
   gameState.users.forEach(user => {
@@ -552,7 +599,13 @@ function handleEndGame() {
       type: 'game_end',
       finalScore: user.score,
       finalRank: userRank ? userRank.rank : finalLeaderboard.length + 1,
-      topThree: topThree
+      topThree: topThree,
+      config: {
+        showLeaderboard: config.ui.showLeaderboard,
+        showTopThree: config.ui.showTopThree,
+        endGameMessage: config.ui.endGameMessage,
+        endGameSubMessage: config.ui.endGameSubMessage
+      }
     });
   });
 
