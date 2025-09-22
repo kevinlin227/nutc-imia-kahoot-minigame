@@ -505,7 +505,9 @@
             pageSize: 20,
             sortBy: 'score',
             searchTerm: '',
-            filteredUsers: []
+            filteredUsers: [],
+            // 倒數計時狀態
+            isCountingDown: false
         };
 
         // WebSocket連接
@@ -654,8 +656,6 @@
         function handleAdminNextQuestionCountdown(message) {
             hideAllCountdowns();
             showNextQuestionCountdown(message.countdown);
-            // 確保倒數期間下一題按鈕保持禁用
-            document.getElementById('nextQuestionBtn').disabled = true;
         }
 
         // 處理作答統計更新
@@ -716,8 +716,17 @@
         }
 
 
+        // 存儲當前的計時器ID以避免衝突
+        let currentCountdownInterval = null;
+
         // 顯示下一題倒計時
         function showNextQuestionCountdown(seconds) {
+            // 清除之前的計時器
+            if (currentCountdownInterval) {
+                clearInterval(currentCountdownInterval);
+                currentCountdownInterval = null;
+            }
+
             hideAllCountdowns();
             const countdown = document.getElementById('nextQuestionCountdown');
             const valueElement = document.getElementById('nextQuestionCountdownValue');
@@ -725,15 +734,19 @@
 
             countdown.classList.add('active');
             valueElement.textContent = seconds;
+            valueElement.style.color = ''; // 重置顏色
 
-            // 確保下一題按鈕在倒數期間保持禁用
+            // 設置倒數狀態並確保下一題按鈕在倒數期間保持禁用
+            adminState.isCountingDown = true;
             nextQuestionBtn.disabled = true;
 
-            const interval = setInterval(() => {
+            currentCountdownInterval = setInterval(() => {
                 seconds--;
                 if (seconds <= 0) {
-                    clearInterval(interval);
+                    clearInterval(currentCountdownInterval);
+                    currentCountdownInterval = null;
                     countdown.classList.remove('active');
+                    adminState.isCountingDown = false;
                     // 倒數結束後，根據遊戲狀態更新按鈕狀態
                     updateControlButtons();
                 } else {
@@ -744,6 +757,13 @@
 
         // 隱藏所有倒計時
         function hideAllCountdowns() {
+            // 清除當前計時器
+            if (currentCountdownInterval) {
+                clearInterval(currentCountdownInterval);
+                currentCountdownInterval = null;
+            }
+
+            adminState.isCountingDown = false;
             document.getElementById('gameCountdown').classList.remove('active');
             document.getElementById('questionCountdown').classList.remove('active');
             document.getElementById('nextQuestionCountdown').classList.remove('active');
@@ -1082,7 +1102,8 @@
                     break;
 
                 case 'showing_results':
-                    nextQuestionBtn.disabled = false;
+                    // 只有在不是倒數期間才啟用下一題按鈕
+                    nextQuestionBtn.disabled = adminState.isCountingDown;
                     break;
 
                 case 'finished':

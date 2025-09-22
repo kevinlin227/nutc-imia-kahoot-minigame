@@ -1,7 +1,6 @@
 {
   "game": {
     "name": "知識競賽遊戲",
-    "questionTimeLimit": 10,
     "startCountdown": 3,
     "nextQuestionCountdown": 3
   },

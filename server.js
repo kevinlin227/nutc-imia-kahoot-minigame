@@ -5,7 +5,7 @@ const fs = require('fs');
 // UUID使用簡單的隨機字符串生成
 
 const app = express();
-const PORT = 8080;
+const PORT = 80;
 
 // 從JSON文件載入配置
 let config = {};
@@ -18,7 +18,6 @@ try {
   config = {
     game: {
       name: "知識競賽遊戲",
-      questionTimeLimit: 10,
       startCountdown: 3,
       nextQuestionCountdown: 3
     },
@@ -266,7 +265,7 @@ function handleUserJoin(ws, message) {
     questions: questions.map(q => ({
       question: q.question,
       options: q.options,
-      timeLimit: q.timeLimit
+      timeLimit: q.timeLimit || 10000 // 預設10秒
     })) // 不包含答案
   }));
 
@@ -310,7 +309,7 @@ function handleUserReconnect(ws, message) {
     questions: questions.map(q => ({
       question: q.question,
       options: q.options,
-      timeLimit: q.timeLimit
+      timeLimit: q.timeLimit || 10000 // 預設10秒
     })) // 不包含答案
   };
 
@@ -467,7 +466,7 @@ function startQuestion(questionIndex) {
 
   const question = questions[questionIndex];
 
-  const timeLimit = question.timeLimit || (config.game.questionTimeLimit * 1000);
+  const timeLimit = question.timeLimit || 10000; // 預設10秒
 
   broadcast({
     type: 'question_start',
