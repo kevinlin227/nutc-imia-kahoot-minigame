@@ -25,7 +25,25 @@ try {
       endGameMessage: "感謝參與本次知識競賽！",
       endGameSubMessage: "希望你在遊戲中學到了新知識。",
       showLeaderboard: false,
-      showTopThree: false
+      showTopThree: false,
+      home: {
+        welcomeMessage: "歡迎來到多人即時問答遊戲！",
+        welcomeSubMessage: "輸入您的名字開始遊戲",
+        nameInputPlaceholder: "請輸入您的名字",
+        startButtonText: "🚀 開始遊戲",
+        rulesTitle: "遊戲規則",
+        rules: [
+          "每題有4個選項，選擇正確答案獲得分數",
+          "答題速度越快，獲得分數越高",
+          "每題限時10秒作答"
+        ],
+        reconnect: {
+          title: "🔄 發現未完成的遊戲",
+          messageTemplate: "玩家: <strong>{{playerName}}</strong><br>您可以重新連接到正在進行的遊戲",
+          reconnectButtonText: "🚀 重新連接",
+          newGameHint: "如要開始新遊戲，請使用下方的輸入框重新輸入名字"
+        }
+      }
     },
     scoring: {
       baseScore: 100,
@@ -137,7 +155,8 @@ app.get('/api/config', (req, res) => {
       endGameMessage: config.ui.endGameMessage,
       endGameSubMessage: config.ui.endGameSubMessage,
       showLeaderboard: config.ui.showLeaderboard,
-      showTopThree: config.ui.showTopThree
+      showTopThree: config.ui.showTopThree,
+      home: config.ui.home
     }
   });
 });

@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <h1 id="gameTitle">🎯 問答遊戲</h1>
-        <p style="margin-bottom: 30px; color: #666; font-size: 1.2em;">
+        <p id="welcomeText" style="margin-bottom: 30px; color: #666; font-size: 1.2em;">
             歡迎來到多人即時問答遊戲！<br>
             輸入您的名字開始遊戲
         </p>
@@ -28,9 +28,9 @@
             </button>
         </form>
 
-        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 15px;">
-            <h3 style="color: #333; margin-bottom: 15px;">遊戲規則</h3>
-            <ul style="text-align: left; color: #666; line-height: 1.6;">
+        <div id="rulesSection" style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 15px;">
+            <h3 id="rulesTitle" style="color: #333; margin-bottom: 15px;">遊戲規則</h3>
+            <ul id="rulesList" style="text-align: left; color: #666; line-height: 1.6;">
                 <li>每題有4個選項，選擇正確答案獲得分數</li>
                 <li>答題速度越快，獲得分數越高</li>
                 <li>每題限時10秒作答</li>
@@ -50,6 +50,32 @@
                 document.getElementById('pageTitle').textContent = `${config.gameName} - 主頁`;
                 document.getElementById('gameTitle').textContent = `🎯 ${config.gameName}`;
                 document.title = `${config.gameName} - 主頁`;
+
+                // 更新home頁面文字
+                if (config.ui && config.ui.home) {
+                    const homeConfig = config.ui.home;
+
+                    // 更新歡迎訊息
+                    document.getElementById('welcomeText').innerHTML =
+                        `${homeConfig.welcomeMessage}<br>${homeConfig.welcomeSubMessage}`;
+
+                    // 更新輸入框placeholder
+                    document.getElementById('playerName').placeholder = homeConfig.nameInputPlaceholder;
+
+                    // 更新開始按鈕文字
+                    document.getElementById('joinButton').innerHTML = homeConfig.startButtonText;
+
+                    // 更新遊戲規則
+                    document.getElementById('rulesTitle').textContent = homeConfig.rulesTitle;
+
+                    const rulesList = document.getElementById('rulesList');
+                    rulesList.innerHTML = '';
+                    homeConfig.rules.forEach(rule => {
+                        const li = document.createElement('li');
+                        li.textContent = rule;
+                        rulesList.appendChild(li);
+                    });
+                }
             } catch (error) {
                 console.log('無法載入遊戲配置，使用預設值');
             }
@@ -83,11 +109,32 @@
         }
 
         // 顯示重連選項
-        function showReconnectionOption(userName) {
+        async function showReconnectionOption(userName) {
             const form = document.getElementById('joinForm');
 
             // 檢查userName是否為有效值
             const displayName = userName && userName !== 'undefined' ? userName : '未知玩家';
+
+            // 載入重連文字配置
+            let reconnectConfig = {
+                title: "🔄 發現未完成的遊戲",
+                messageTemplate: "玩家: <strong>{{playerName}}</strong><br>您可以重新連接到正在進行的遊戲",
+                reconnectButtonText: "🚀 重新連接",
+                newGameHint: "如要開始新遊戲，請使用下方的輸入框重新輸入名字"
+            };
+
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+                if (config.ui && config.ui.home && config.ui.home.reconnect) {
+                    reconnectConfig = config.ui.home.reconnect;
+                }
+            } catch (error) {
+                console.log('無法載入重連配置，使用預設值');
+            }
+
+            // 處理訊息模板
+            const message = reconnectConfig.messageTemplate.replace('{{playerName}}', displayName);
 
             // 創建重連區域
             const reconnectDiv = document.createElement('div');
@@ -101,10 +148,9 @@
             `;
 
             reconnectDiv.innerHTML = `
-                <h3 style="color: #155724; margin-top: 0;">🔄 發現未完成的遊戲</h3>
+                <h3 style="color: #155724; margin-top: 0;">${reconnectConfig.title}</h3>
                 <p style="color: #155724; margin-bottom: 15px;">
-                    玩家: <strong>${displayName}</strong><br>
-                    您可以重新連接到正在進行的遊戲
+                    ${message}
                 </p>
                 <button type="button" id="reconnectBtn" style="
                     background: #28a745;
@@ -115,9 +161,9 @@
                     cursor: pointer;
                     font-size: 16px;
                     font-weight: bold;
-                ">🚀 重新連接</button>
+                ">${reconnectConfig.reconnectButtonText}</button>
                 <p style="color: #666; margin-top: 15px; font-size: 14px;">
-                    如要開始新遊戲，請使用下方的輸入框重新輸入名字
+                    ${reconnectConfig.newGameHint}
                 </p>
             `;
 
