@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">遊戲 - 後台管理</title>
+    <title>Kahoot 遊戲 - 後台管理</title>
     <link rel="stylesheet" href="/public/css/style.css">
     <style>
         .admin-container {
@@ -382,7 +382,7 @@
 <body>
     <div class="admin-container">
         <div class="admin-panel">
-            <h1 id="gameTitle">🎮 遊戲後台管理</h1>
+            <h1>🎮 Kahoot 遊戲後台管理</h1>
 
             <!-- 遊戲狀態總覽 -->
             <div class="status-panel">
@@ -505,33 +505,14 @@
             pageSize: 20,
             sortBy: 'score',
             searchTerm: '',
-            filteredUsers: [],
-            // 倒數計時狀態
-            isCountingDown: false
+            filteredUsers: []
         };
 
         // WebSocket連接
         const ws = new GameWebSocket();
 
-        // 載入遊戲配置
-        async function loadGameConfig() {
-            try {
-                const response = await fetch('/api/config');
-                const config = await response.json();
-
-                // 更新頁面標題和遊戲名稱
-                document.getElementById('pageTitle').textContent = `${config.gameName} - 後台管理`;
-                document.getElementById('gameTitle').textContent = `🎮 ${config.gameName}後台管理`;
-                document.title = `${config.gameName} - 後台管理`;
-            } catch (error) {
-                console.log('無法載入遊戲配置，使用預設值');
-            }
-        }
-
         // 初始化
         function init() {
-            // 載入配置
-            loadGameConfig();
             // 設置WebSocket事件處理
             ws.onopen = () => {
                 addLog('已連接到遊戲伺服器', 'info');
@@ -656,6 +637,8 @@
         function handleAdminNextQuestionCountdown(message) {
             hideAllCountdowns();
             showNextQuestionCountdown(message.countdown);
+            // 確保倒數期間下一題按鈕保持禁用
+            document.getElementById('nextQuestionBtn').disabled = true;
         }
 
         // 處理作答統計更新
@@ -716,17 +699,8 @@
         }
 
 
-        // 存儲當前的計時器ID以避免衝突
-        let currentCountdownInterval = null;
-
         // 顯示下一題倒計時
         function showNextQuestionCountdown(seconds) {
-            // 清除之前的計時器
-            if (currentCountdownInterval) {
-                clearInterval(currentCountdownInterval);
-                currentCountdownInterval = null;
-            }
-
             hideAllCountdowns();
             const countdown = document.getElementById('nextQuestionCountdown');
             const valueElement = document.getElementById('nextQuestionCountdownValue');
@@ -734,19 +708,15 @@
 
             countdown.classList.add('active');
             valueElement.textContent = seconds;
-            valueElement.style.color = ''; // 重置顏色
 
-            // 設置倒數狀態並確保下一題按鈕在倒數期間保持禁用
-            adminState.isCountingDown = true;
+            // 確保下一題按鈕在倒數期間保持禁用
             nextQuestionBtn.disabled = true;
 
-            currentCountdownInterval = setInterval(() => {
+            const interval = setInterval(() => {
                 seconds--;
                 if (seconds <= 0) {
-                    clearInterval(currentCountdownInterval);
-                    currentCountdownInterval = null;
+                    clearInterval(interval);
                     countdown.classList.remove('active');
-                    adminState.isCountingDown = false;
                     // 倒數結束後，根據遊戲狀態更新按鈕狀態
                     updateControlButtons();
                 } else {
@@ -757,13 +727,6 @@
 
         // 隱藏所有倒計時
         function hideAllCountdowns() {
-            // 清除當前計時器
-            if (currentCountdownInterval) {
-                clearInterval(currentCountdownInterval);
-                currentCountdownInterval = null;
-            }
-
-            adminState.isCountingDown = false;
             document.getElementById('gameCountdown').classList.remove('active');
             document.getElementById('questionCountdown').classList.remove('active');
             document.getElementById('nextQuestionCountdown').classList.remove('active');
@@ -1102,8 +1065,7 @@
                     break;
 
                 case 'showing_results':
-                    // 只有在不是倒數期間才啟用下一題按鈕
-                    nextQuestionBtn.disabled = adminState.isCountingDown;
+                    nextQuestionBtn.disabled = false;
                     break;
 
                 case 'finished':
