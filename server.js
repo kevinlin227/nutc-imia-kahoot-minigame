@@ -269,16 +269,57 @@ function generateUserId() {
 }
 
 // 計算分數
-function calculateScore(isCorrect, timeSpent, rank) {
+function calculateScore(isCorrect, timeSpent, rank, totalParticipants = 1) {
   if (!isCorrect) return 0;
 
   const baseScore = config.scoring.baseScore;
-  const speedBonus = Math.max(
-    config.scoring.maxTimeBonus - (rank - 1) * 10,
-    config.scoring.minTimeBonus
-  );
 
-  return baseScore + speedBonus;
+  // 名次加分系統 - 根據參與人數動態調整
+  const rankConfig = config.scoring.rankBonus;
+  let rankBonus = 0;
+
+  if (totalParticipants <= 1) {
+    // 只有一個人參與，給予最大獎勵
+    rankBonus = rankConfig.maxRankBonus;
+  } else {
+    // 多人參與時，按排名計算獎勵
+    const maxRanksForBonus = Math.ceil((rankConfig.maxRankBonus - rankConfig.minRankBonus) / rankConfig.rankDecrement) + 1;
+
+    if (rank <= maxRanksForBonus) {
+      rankBonus = Math.max(
+        rankConfig.maxRankBonus - (rank - 1) * rankConfig.rankDecrement,
+        rankConfig.minRankBonus
+      );
+    } else {
+      // 排名太後面的人只能獲得最低獎勵
+      rankBonus = rankConfig.minRankBonus;
+    }
+  }
+
+  // 時間加權分數系統
+  const timeConfig = config.scoring.timeBonus;
+  let timeBonus = 0;
+
+  if (timeConfig && timeSpent <= timeConfig.maxTime) {
+    if (timeSpent <= timeConfig.perfectTimeThreshold) {
+      // 在完美時間內，獲得滿分時間獎勵
+      timeBonus = timeConfig.maxTimeBonus;
+    } else {
+      // 超過完美時間後，線性遞減到最低分
+      const timeRange = timeConfig.maxTime - timeConfig.perfectTimeThreshold;
+      const bonusRange = timeConfig.maxTimeBonus - timeConfig.minTimeBonus;
+      const timeOverPerfect = timeSpent - timeConfig.perfectTimeThreshold;
+
+      timeBonus = timeConfig.maxTimeBonus - (timeOverPerfect / timeRange) * bonusRange;
+      timeBonus = Math.max(timeBonus, timeConfig.minTimeBonus);
+    }
+  }
+
+  const totalScore = baseScore + rankBonus + Math.round(timeBonus);
+
+  console.log(`計分詳情 - 基礎分:${baseScore}, 名次獎勵:${rankBonus} (排名:${rank}/${totalParticipants}), 時間獎勵:${Math.round(timeBonus)}, 總分:${totalScore}, 用時:${timeSpent}ms`);
+
+  return totalScore;
 }
 
 // 獲取排行榜
@@ -771,7 +812,8 @@ function handleShowResults() {
   correctUsers.forEach((user, index) => {
     const answer = user.answers.find(a => a.questionIndex === gameState.currentQuestion);
     const rank = index + 1; // 在答對用戶中的排名
-    const score = calculateScore(true, answer.timeSpent, rank);
+    const totalCorrectUsers = correctUsers.length; // 答對的總人數
+    const score = calculateScore(true, answer.timeSpent, rank, totalCorrectUsers);
     user.score += score;
 
     // 更新遊戲記錄中該答案的得分
