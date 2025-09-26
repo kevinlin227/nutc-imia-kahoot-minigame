@@ -75,6 +75,194 @@ const gameState = {
   timeoutUsers: new Set() // 記錄超時的用戶
 };
 
+// 遊戲記錄相關
+let currentGameRecord = null;
+const RECORDS_DIR = path.join(__dirname, 'game-records');
+
+// 確保遊戲記錄目錄存在
+if (!fs.existsSync(RECORDS_DIR)) {
+  fs.mkdirSync(RECORDS_DIR, { recursive: true });
+  console.log('創建遊戲記錄目錄:', RECORDS_DIR);
+}
+
+// 生成遊戲ID
+function generateGameId() {
+  const now = new Date();
+  const dateStr = now.toISOString().replace(/[:.]/g, '-').split('T')[0];
+  const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+  const randomStr = Math.random().toString(36).substring(2, 8);
+  return `game_${dateStr}_${timeStr}_${randomStr}`;
+}
+
+// 初始化遊戲記錄
+function initializeGameRecord() {
+  const gameId = generateGameId();
+  currentGameRecord = {
+    gameId: gameId,
+    sessionInfo: {
+      startTime: new Date().toISOString(),
+      endTime: null,
+      duration: 0,
+      totalQuestions: questions.length,
+      totalParticipants: 0,
+      gameConfig: {
+        scoring: config.scoring,
+        game: {
+          startCountdown: config.game.startCountdown,
+          nextQuestionCountdown: config.game.nextQuestionCountdown
+        }
+      }
+    },
+    participants: [],
+    questionStats: [],
+    finalLeaderboard: []
+  };
+
+  console.log(`初始化遊戲記錄: ${gameId}`);
+  return currentGameRecord;
+}
+
+// 更新參與者記錄
+function updateParticipantRecord(user) {
+  if (!currentGameRecord) return;
+
+  let participant = currentGameRecord.participants.find(p => p.playerId === user.id);
+
+  if (!participant) {
+    participant = {
+      playerId: user.id,
+      playerName: user.name,
+      joinTime: new Date().toISOString(),
+      finalScore: 0,
+      finalRank: 0,
+      totalAnswerTime: 0,
+      correctAnswers: 0,
+      answers: []
+    };
+    currentGameRecord.participants.push(participant);
+  }
+
+  // 更新基本信息
+  participant.finalScore = user.score;
+  participant.totalAnswerTime = user.totalTime;
+  participant.correctAnswers = user.answers.filter(a => a.correct).length;
+
+  // 更新詳細答題記錄
+  participant.answers = user.answers.map(answer => ({
+    questionIndex: answer.questionIndex,
+    question: questions[answer.questionIndex].question,
+    selectedAnswer: answer.answer,
+    correctAnswer: questions[answer.questionIndex].correctAnswer,
+    isCorrect: answer.correct,
+    timeSpent: answer.timeSpent,
+    scoreGained: 0, // 將在計分時更新
+    answerTimestamp: new Date(answer.timestamp).toISOString()
+  }));
+}
+
+// 記錄問題統計
+function recordQuestionStats(questionIndex) {
+  if (!currentGameRecord) return;
+
+  const question = questions[questionIndex];
+  const totalUsers = gameState.users.size;
+  const answeredUsers = Array.from(gameState.users.values())
+    .filter(user => user.answers.find(a => a.questionIndex === questionIndex));
+
+  const correctUsers = answeredUsers.filter(user => {
+    const answer = user.answers.find(a => a.questionIndex === questionIndex);
+    return answer && answer.correct;
+  });
+
+  const timeoutCount = gameState.timeoutUsers.size;
+  const answerCounts = [0, 0, 0, 0];
+  let totalResponseTime = 0;
+
+  answeredUsers.forEach(user => {
+    const answer = user.answers.find(a => a.questionIndex === questionIndex);
+    if (answer && answer.answer >= 0 && answer.answer < 4) {
+      answerCounts[answer.answer]++;
+      totalResponseTime += answer.timeSpent;
+    }
+  });
+
+  const questionStats = {
+    questionIndex: questionIndex,
+    question: question.question,
+    options: question.options,
+    correctAnswer: question.correctAnswer,
+    totalResponses: answeredUsers.length,
+    correctResponses: correctUsers.length,
+    timeoutResponses: timeoutCount,
+    accuracyRate: answeredUsers.length > 0 ? correctUsers.length / answeredUsers.length : 0,
+    averageResponseTime: answeredUsers.length > 0 ? Math.round(totalResponseTime / answeredUsers.length) : 0,
+    answerDistribution: answerCounts,
+    answerPercentages: answerCounts.map(count =>
+      totalUsers > 0 ? Math.round((count / totalUsers) * 100) : 0
+    )
+  };
+
+  // 更新或添加問題統計
+  const existingStatIndex = currentGameRecord.questionStats.findIndex(s => s.questionIndex === questionIndex);
+  if (existingStatIndex >= 0) {
+    currentGameRecord.questionStats[existingStatIndex] = questionStats;
+  } else {
+    currentGameRecord.questionStats.push(questionStats);
+  }
+}
+
+// 完成並保存遊戲記錄
+function finalizeAndSaveGameRecord() {
+  if (!currentGameRecord) return null;
+
+  // 設置結束時間和持續時間
+  const endTime = new Date();
+  const startTime = new Date(currentGameRecord.sessionInfo.startTime);
+
+  currentGameRecord.sessionInfo.endTime = endTime.toISOString();
+  currentGameRecord.sessionInfo.duration = endTime.getTime() - startTime.getTime();
+  currentGameRecord.sessionInfo.totalParticipants = currentGameRecord.participants.length;
+
+  // 更新最終排行榜
+  const finalLeaderboard = getLeaderboard();
+  currentGameRecord.finalLeaderboard = finalLeaderboard;
+
+  // 更新參與者的最終排名
+  currentGameRecord.participants.forEach(participant => {
+    const leaderboardEntry = finalLeaderboard.find(entry => entry.id === participant.playerId);
+    if (leaderboardEntry) {
+      participant.finalRank = leaderboardEntry.rank;
+    }
+  });
+
+  // 保存記錄到文件
+  const fileName = `${currentGameRecord.gameId}.json`;
+  const filePath = path.join(RECORDS_DIR, fileName);
+
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(currentGameRecord, null, 2), 'utf8');
+    console.log(`遊戲記錄已保存: ${filePath}`);
+
+    // 創建記錄摘要
+    const summary = {
+      gameId: currentGameRecord.gameId,
+      startTime: currentGameRecord.sessionInfo.startTime,
+      endTime: currentGameRecord.sessionInfo.endTime,
+      duration: Math.round(currentGameRecord.sessionInfo.duration / 1000) + '秒',
+      totalParticipants: currentGameRecord.sessionInfo.totalParticipants,
+      totalQuestions: currentGameRecord.sessionInfo.totalQuestions,
+      fileName: fileName
+    };
+
+    console.log('遊戲記錄摘要:', summary);
+    return { filePath, summary };
+
+  } catch (error) {
+    console.error('保存遊戲記錄失敗:', error);
+    return null;
+  }
+}
+
 // 生成用戶ID
 function generateUserId() {
   return 'user_' + Math.random().toString(36).substring(2, 15);
@@ -434,6 +622,9 @@ function handleUserAnswer(ws, message) {
   user.answers.push(answerRecord);
   user.totalTime += message.timeSpent;
 
+  // 更新遊戲記錄中的參與者數據
+  updateParticipantRecord(user);
+
   // 向管理員發送即時作答統計
   broadcastToAdmins({
     type: 'answer_stats',
@@ -453,6 +644,14 @@ function handleStartGame() {
   gameState.status = 'playing';
   gameState.allowNewUsers = false;
   gameState.currentQuestion = 0;
+
+  // 初始化遊戲記錄
+  initializeGameRecord();
+
+  // 記錄所有現有參與者
+  gameState.users.forEach(user => {
+    updateParticipantRecord(user);
+  });
 
   // 發送遊戲開始倒計時
   broadcast({
@@ -574,6 +773,17 @@ function handleShowResults() {
     const rank = index + 1; // 在答對用戶中的排名
     const score = calculateScore(true, answer.timeSpent, rank);
     user.score += score;
+
+    // 更新遊戲記錄中該答案的得分
+    if (currentGameRecord) {
+      const participant = currentGameRecord.participants.find(p => p.playerId === user.id);
+      if (participant) {
+        const participantAnswer = participant.answers.find(a => a.questionIndex === gameState.currentQuestion);
+        if (participantAnswer) {
+          participantAnswer.scoreGained = score;
+        }
+      }
+    }
   });
 
   // 發送結果給每個用戶
@@ -592,6 +802,14 @@ function handleShowResults() {
         updatedLeaderboard[userRank.rank - 2].score - user.score : 0,
       leaderboard: updatedLeaderboard
     });
+  });
+
+  // 記錄問題統計數據
+  recordQuestionStats(gameState.currentQuestion);
+
+  // 更新所有參與者記錄（包含最新分數）
+  gameState.users.forEach(user => {
+    updateParticipantRecord(user);
   });
 
   // 廣播給管理員狀態更新
@@ -627,6 +845,12 @@ function handleEndGame() {
     });
   });
 
+  // 完成並保存遊戲記錄
+  const saveResult = finalizeAndSaveGameRecord();
+  if (saveResult) {
+    console.log(`遊戲結束 - 記錄已保存至: ${saveResult.summary.fileName}`);
+  }
+
   console.log('遊戲結束');
 }
 
@@ -639,6 +863,9 @@ function handleResetGame() {
   gameState.showingResults = false;
   gameState.allowNewUsers = true;
   gameState.timeoutUsers.clear();
+
+  // 重置遊戲記錄
+  currentGameRecord = null;
 
   // 斷開所有用戶連接並清空用戶列表
   gameState.users.forEach(user => {
