@@ -148,16 +148,19 @@ function updateParticipantRecord(user) {
   participant.correctAnswers = user.answers.filter(a => a.correct).length;
 
   // 更新詳細答題記錄
-  participant.answers = user.answers.map(answer => ({
-    questionIndex: answer.questionIndex,
-    question: questions[answer.questionIndex].question,
-    selectedAnswer: answer.answer,
-    correctAnswer: questions[answer.questionIndex].correctAnswer,
-    isCorrect: answer.correct,
-    timeSpent: answer.timeSpent,
-    scoreGained: 0, // 將在計分時更新
-    answerTimestamp: new Date(answer.timestamp).toISOString()
-  }));
+  participant.answers = user.answers.map(answer => {
+    const questionData = questions[answer.questionIndex];
+    return {
+      questionIndex: answer.questionIndex,
+      question: questionData ? questionData.question : '未知題目',
+      selectedAnswer: answer.answer,
+      correctAnswer: questionData ? questionData.correctAnswer : -1,
+      isCorrect: answer.correct,
+      timeSpent: answer.timeSpent,
+      scoreGained: answer.scoreGained || 0,
+      answerTimestamp: new Date(answer.timestamp).toISOString()
+    };
+  });
 }
 
 // 記錄問題統計
@@ -278,21 +281,23 @@ function calculateScore(isCorrect, timeSpent, rank, totalParticipants = 1) {
   const rankConfig = config.scoring.rankBonus;
   let rankBonus = 0;
 
-  if (totalParticipants <= 1) {
-    // 只有一個人參與，給予最大獎勵
-    rankBonus = rankConfig.maxRankBonus;
-  } else {
-    // 多人參與時，按排名計算獎勵
-    const maxRanksForBonus = Math.ceil((rankConfig.maxRankBonus - rankConfig.minRankBonus) / rankConfig.rankDecrement) + 1;
-
-    if (rank <= maxRanksForBonus) {
-      rankBonus = Math.max(
-        rankConfig.maxRankBonus - (rank - 1) * rankConfig.rankDecrement,
-        rankConfig.minRankBonus
-      );
+  if (rankConfig) {
+    if (totalParticipants <= 1) {
+      // 只有一個人參與，給予最大獎勵
+      rankBonus = rankConfig.maxRankBonus;
     } else {
-      // 排名太後面的人只能獲得最低獎勵
-      rankBonus = rankConfig.minRankBonus;
+      // 多人參與時，按排名計算獎勵
+      const maxRanksForBonus = Math.ceil((rankConfig.maxRankBonus - rankConfig.minRankBonus) / rankConfig.rankDecrement) + 1;
+
+      if (rank <= maxRanksForBonus) {
+        rankBonus = Math.max(
+          rankConfig.maxRankBonus - (rank - 1) * rankConfig.rankDecrement,
+          rankConfig.minRankBonus
+        );
+      } else {
+        // 排名太後面的人只能獲得最低獎勵
+        rankBonus = rankConfig.minRankBonus;
+      }
     }
   }
 
@@ -312,6 +317,17 @@ function calculateScore(isCorrect, timeSpent, rank, totalParticipants = 1) {
 
       timeBonus = timeConfig.maxTimeBonus - (timeOverPerfect / timeRange) * bonusRange;
       timeBonus = Math.max(timeBonus, timeConfig.minTimeBonus);
+    }
+  } else {
+    // 如果沒有時間獎勵配置，使用簡單的時間獎勵系統
+    const maxTimeBonus = config.scoring.maxTimeBonus || 50;
+    const minTimeBonus = config.scoring.minTimeBonus || 10;
+    const maxTime = 10000; // 10秒
+
+    if (timeSpent <= maxTime) {
+      // 越快答越多分
+      timeBonus = maxTimeBonus - ((timeSpent / maxTime) * (maxTimeBonus - minTimeBonus));
+      timeBonus = Math.max(timeBonus, minTimeBonus);
     }
   }
 
@@ -663,7 +679,7 @@ function handleUserAnswer(ws, message) {
   user.answers.push(answerRecord);
   user.totalTime += message.timeSpent;
 
-  // 更新遊戲記錄中的參與者數據
+  // 立即更新遊戲記錄中的參與者數據
   updateParticipantRecord(user);
 
   // 向管理員發送即時作答統計
@@ -815,6 +831,9 @@ function handleShowResults() {
     const totalCorrectUsers = correctUsers.length; // 答對的總人數
     const score = calculateScore(true, answer.timeSpent, rank, totalCorrectUsers);
     user.score += score;
+
+    // 將分數記錄到用戶的答案記錄中
+    answer.scoreGained = score;
 
     // 更新遊戲記錄中該答案的得分
     if (currentGameRecord) {
