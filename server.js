@@ -883,7 +883,13 @@ function handleEndGame() {
     type: 'game_end',
     status: 'finished',
     topThree: topThree,
-    allPlayers: allPlayers
+    allPlayers: allPlayers,
+    config: {
+      showLeaderboard: config.ui.showLeaderboard,
+      showTopThree: config.ui.showTopThree,
+      endGameMessage: config.ui.endGameMessage,
+      endGameSubMessage: config.ui.endGameSubMessage
+    }
   });
 
   // 完成並保存遊戲記錄
