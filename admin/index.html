@@ -148,6 +148,43 @@
             display: block;
         }
 
+        .game-finished-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+            animation: slideDown 0.5s ease;
+        }
+
+        .game-finished-banner.active {
+            display: block;
+        }
+
+        .game-finished-banner h2 {
+            margin: 0 0 15px 0;
+            font-size: 2.5em;
+        }
+
+        .game-finished-banner p {
+            margin: 10px 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
         .answer-stats {
             background: white;
             border-radius: 15px;
@@ -400,6 +437,13 @@
                 </div>
             </div>
 
+            <!-- 遊戲結束橫幅 -->
+            <div id="gameFinishedBanner" class="game-finished-banner">
+                <h2>🎉 遊戲已結束 🎉</h2>
+                <p>所有題目已完成！</p>
+                <p>感謝所有玩家的參與！</p>
+            </div>
+
             <!-- 即時監控面板 -->
             <div class="monitoring-panel">
                 <!-- 倒計時顯示 -->
@@ -434,7 +478,7 @@
                     <button id="showResultsBtn" onclick="showResults()" disabled>
                         📊 顯示結果
                     </button>
-                    <button id="nextQuestionBtn" onclick="nextQuestion()" disabled>
+                    <button id="nextQuestionBtn" onclick="handleNextAction()" disabled>
                         ➡️ 下一題
                     </button>
                 </div>
@@ -568,6 +612,11 @@
             updateUsersDisplay();
             updateControlButtons();
 
+            // 如果遊戲已結束，顯示結束橫幅
+            if (adminState.gameStatus === 'finished') {
+                showGameFinishedBanner();
+            }
+
             addLog('管理員連接成功，已同步遊戲狀態', 'info');
         }
 
@@ -616,6 +665,7 @@
             updateGameStatus();
             updateControlButtons();
             hideAllCountdowns();
+            showGameFinishedBanner();
             addLog('遊戲結束', 'info');
         }
 
@@ -730,6 +780,18 @@
             document.getElementById('gameCountdown').classList.remove('active');
             document.getElementById('questionCountdown').classList.remove('active');
             document.getElementById('nextQuestionCountdown').classList.remove('active');
+        }
+
+        // 顯示遊戲結束橫幅
+        function showGameFinishedBanner() {
+            const banner = document.getElementById('gameFinishedBanner');
+            banner.classList.add('active');
+        }
+
+        // 隱藏遊戲結束橫幅
+        function hideGameFinishedBanner() {
+            const banner = document.getElementById('gameFinishedBanner');
+            banner.classList.remove('active');
         }
 
         // 重置作答統計
@@ -1066,6 +1128,14 @@
 
                 case 'showing_results':
                     nextQuestionBtn.disabled = false;
+                    // 檢查是否為最後一題,更新按鈕文字
+                    if (adminState.currentQuestion >= adminState.totalQuestions - 1) {
+                        nextQuestionBtn.innerHTML = '🏁 結束遊戲';
+                        nextQuestionBtn.style.background = '#28a745';
+                    } else {
+                        nextQuestionBtn.innerHTML = '➡️ 下一題';
+                        nextQuestionBtn.style.background = '';
+                    }
                     break;
 
                 case 'finished':
@@ -1108,13 +1178,25 @@
             addLog('管理員顯示結果', 'warning');
         }
 
-        function nextQuestion() {
-            // 禁用下一題按鈕，防止重複點擊
+        // 處理下一題或結束遊戲的動作
+        function handleNextAction() {
             const nextQuestionBtn = document.getElementById('nextQuestionBtn');
             nextQuestionBtn.disabled = true;
 
-            ws.send({ type: 'admin_next_question' });
-            addLog('管理員進入下一題', 'warning');
+            // 檢查是否為最後一題
+            if (adminState.currentQuestion >= adminState.totalQuestions - 1) {
+                // 最後一題，結束遊戲
+                ws.send({ type: 'admin_end_game' });
+                addLog('管理員結束遊戲', 'warning');
+            } else {
+                // 還有下一題
+                ws.send({ type: 'admin_next_question' });
+                addLog('管理員進入下一題', 'warning');
+            }
+        }
+
+        function nextQuestion() {
+            handleNextAction();
         }
 
         function endGame() {
@@ -1128,6 +1210,7 @@
             if (confirm('確定要重置遊戲嗎？這將清除所有參與者和進度！')) {
                 ws.send({ type: 'admin_reset_game' });
                 addLog('管理員重置遊戲', 'warning');
+                hideGameFinishedBanner();
 
                 // 等待一秒後重新載入頁面
                 setTimeout(() => {

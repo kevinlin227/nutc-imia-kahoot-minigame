@@ -877,6 +877,12 @@ function handleEndGame() {
     });
   });
 
+  // 廣播遊戲結束訊息給所有客戶端（包括管理員）
+  broadcast({
+    type: 'game_end',
+    status: 'finished'
+  });
+
   // 完成並保存遊戲記錄
   const saveResult = finalizeAndSaveGameRecord();
   if (saveResult) {
