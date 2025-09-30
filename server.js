@@ -99,23 +99,15 @@ function initializeGameRecord() {
   const gameId = generateGameId();
   currentGameRecord = {
     gameId: gameId,
-    sessionInfo: {
+    gameInfo: {
+      name: config.game.name,
       startTime: new Date().toISOString(),
       endTime: null,
-      duration: 0,
-      totalQuestions: questions.length,
-      totalParticipants: 0,
-      gameConfig: {
-        scoring: config.scoring,
-        game: {
-          startCountdown: config.game.startCountdown,
-          nextQuestionCountdown: config.game.nextQuestionCountdown
-        }
-      }
+      duration: 0
     },
     participants: [],
-    questionStats: [],
-    finalLeaderboard: []
+    questions: [],
+    leaderboard: []
   };
 
   console.log(`初始化遊戲記錄: ${gameId}`);
@@ -147,70 +139,37 @@ function updateParticipantRecord(user) {
   participant.totalAnswerTime = user.totalTime;
   participant.correctAnswers = user.answers.filter(a => a.correct).length;
 
-  // 更新詳細答題記錄
-  participant.answers = user.answers.map(answer => {
-    const questionData = questions[answer.questionIndex];
-    return {
-      questionIndex: answer.questionIndex,
-      question: questionData ? questionData.question : '未知題目',
-      selectedAnswer: answer.answer,
-      correctAnswer: questionData ? questionData.correctAnswer : -1,
-      isCorrect: answer.correct,
-      timeSpent: answer.timeSpent,
-      scoreGained: answer.scoreGained || 0,
-      answerTimestamp: new Date(answer.timestamp).toISOString()
-    };
-  });
+  // 更新詳細答題記錄 - 簡潔格式
+  participant.answers = user.answers.map(answer => ({
+    q: answer.questionIndex,           // 問題索引
+    a: answer.answer,                  // 選擇的答案
+    correct: answer.correct,           // 是否正確
+    time: answer.timeSpent,           // 用時(毫秒)
+    score: answer.scoreGained || 0,   // 得分
+    timestamp: answer.timestamp       // 時間戳
+  }));
 }
 
-// 記錄問題統計
+// 記錄問題基本信息（不含分析數據）
 function recordQuestionStats(questionIndex) {
   if (!currentGameRecord) return;
 
   const question = questions[questionIndex];
-  const totalUsers = gameState.users.size;
-  const answeredUsers = Array.from(gameState.users.values())
-    .filter(user => user.answers.find(a => a.questionIndex === questionIndex));
 
-  const correctUsers = answeredUsers.filter(user => {
-    const answer = user.answers.find(a => a.questionIndex === questionIndex);
-    return answer && answer.correct;
-  });
-
-  const timeoutCount = gameState.timeoutUsers.size;
-  const answerCounts = [0, 0, 0, 0];
-  let totalResponseTime = 0;
-
-  answeredUsers.forEach(user => {
-    const answer = user.answers.find(a => a.questionIndex === questionIndex);
-    if (answer && answer.answer >= 0 && answer.answer < 4) {
-      answerCounts[answer.answer]++;
-      totalResponseTime += answer.timeSpent;
-    }
-  });
-
-  const questionStats = {
-    questionIndex: questionIndex,
+  // 只記錄問題基本信息，分析數據後續計算
+  const questionRecord = {
+    index: questionIndex,
     question: question.question,
     options: question.options,
-    correctAnswer: question.correctAnswer,
-    totalResponses: answeredUsers.length,
-    correctResponses: correctUsers.length,
-    timeoutResponses: timeoutCount,
-    accuracyRate: answeredUsers.length > 0 ? correctUsers.length / answeredUsers.length : 0,
-    averageResponseTime: answeredUsers.length > 0 ? Math.round(totalResponseTime / answeredUsers.length) : 0,
-    answerDistribution: answerCounts,
-    answerPercentages: answerCounts.map(count =>
-      totalUsers > 0 ? Math.round((count / totalUsers) * 100) : 0
-    )
+    correctAnswer: question.correctAnswer
   };
 
-  // 更新或添加問題統計
-  const existingStatIndex = currentGameRecord.questionStats.findIndex(s => s.questionIndex === questionIndex);
+  // 更新或添加問題記錄
+  const existingStatIndex = currentGameRecord.questions.findIndex(q => q.index === questionIndex);
   if (existingStatIndex >= 0) {
-    currentGameRecord.questionStats[existingStatIndex] = questionStats;
+    currentGameRecord.questions[existingStatIndex] = questionRecord;
   } else {
-    currentGameRecord.questionStats.push(questionStats);
+    currentGameRecord.questions.push(questionRecord);
   }
 }
 
@@ -220,15 +179,19 @@ function finalizeAndSaveGameRecord() {
 
   // 設置結束時間和持續時間
   const endTime = new Date();
-  const startTime = new Date(currentGameRecord.sessionInfo.startTime);
+  const startTime = new Date(currentGameRecord.gameInfo.startTime);
 
-  currentGameRecord.sessionInfo.endTime = endTime.toISOString();
-  currentGameRecord.sessionInfo.duration = endTime.getTime() - startTime.getTime();
-  currentGameRecord.sessionInfo.totalParticipants = currentGameRecord.participants.length;
+  currentGameRecord.gameInfo.endTime = endTime.toISOString();
+  currentGameRecord.gameInfo.duration = endTime.getTime() - startTime.getTime();
 
   // 更新最終排行榜
   const finalLeaderboard = getLeaderboard();
-  currentGameRecord.finalLeaderboard = finalLeaderboard;
+  currentGameRecord.leaderboard = finalLeaderboard.map(entry => ({
+    rank: entry.rank,
+    playerId: entry.id,
+    playerName: entry.name,
+    score: entry.score
+  }));
 
   // 更新參與者的最終排名
   currentGameRecord.participants.forEach(participant => {
@@ -249,11 +212,11 @@ function finalizeAndSaveGameRecord() {
     // 創建記錄摘要
     const summary = {
       gameId: currentGameRecord.gameId,
-      startTime: currentGameRecord.sessionInfo.startTime,
-      endTime: currentGameRecord.sessionInfo.endTime,
-      duration: Math.round(currentGameRecord.sessionInfo.duration / 1000) + '秒',
-      totalParticipants: currentGameRecord.sessionInfo.totalParticipants,
-      totalQuestions: currentGameRecord.sessionInfo.totalQuestions,
+      startTime: currentGameRecord.gameInfo.startTime,
+      endTime: currentGameRecord.gameInfo.endTime,
+      duration: Math.round(currentGameRecord.gameInfo.duration / 1000) + '秒',
+      totalParticipants: currentGameRecord.participants.length,
+      totalQuestions: currentGameRecord.questions.length,
       fileName: fileName
     };
 
