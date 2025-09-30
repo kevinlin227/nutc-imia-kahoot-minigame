@@ -71,6 +71,7 @@
             </div>
 
             <div id="scoreUpdate" style="margin: 20px 0;">
+                <div id="scoreGained" style="color: #667eea; font-weight: bold; font-size: 1.5em; margin-bottom: 15px;"></div>
                 <div id="currentScore" class="score-display"></div>
                 <div id="currentRank" class="rank-display"></div>
                 <div id="rankGap" style="color: #999; font-size: 14px;"></div>
@@ -576,8 +577,18 @@
                     `<div style="color: #999;">您未作答或重連錯過此題</div>`;
             }
 
+            // 顯示本輪獲得的分數
+            const scoreGainedElement = document.getElementById('scoreGained');
+            if (message.scoreGained > 0) {
+                scoreGainedElement.innerHTML = `🎉 本輪獲得: ${message.scoreGained} 分`;
+                scoreGainedElement.style.color = '#28a745';
+            } else {
+                scoreGainedElement.innerHTML = `本輪獲得: ${message.scoreGained} 分`;
+                scoreGainedElement.style.color = '#999';
+            }
+
             // 顯示分數和排名
-            document.getElementById('currentScore').textContent = `分數: ${message.score}`;
+            document.getElementById('currentScore').textContent = `總分數: ${message.score}`;
             document.getElementById('currentRank').textContent = `排名: 第 ${message.rank} 名`;
 
             if (message.gap > 0) {

@@ -821,6 +821,7 @@ function handleShowResults() {
       correctAnswer: currentQuestion.correctAnswer,
       userAnswer: userAnswer ? userAnswer.answer : null,
       score: user.score,
+      scoreGained: userAnswer && userAnswer.scoreGained ? userAnswer.scoreGained : 0,
       rank: userRank ? userRank.rank : updatedLeaderboard.length + 1,
       gap: userRank && userRank.rank > 1 ?
         updatedLeaderboard[userRank.rank - 2].score - user.score : 0,
