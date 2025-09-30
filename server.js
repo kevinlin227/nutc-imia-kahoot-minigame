@@ -851,6 +851,13 @@ function handleEndGame() {
   const finalLeaderboard = getLeaderboard();
   const topThree = config.ui.showTopThree ? finalLeaderboard.slice(0, 3) : [];
 
+  // 準備完整的玩家排行榜
+  const allPlayers = finalLeaderboard.map(item => ({
+    id: item.id,
+    name: item.name,
+    score: item.score
+  }));
+
   // 發送最終結果給每個用戶
   gameState.users.forEach(user => {
     const userRank = finalLeaderboard.find(item => item.id === user.id);
@@ -860,6 +867,7 @@ function handleEndGame() {
       finalScore: user.score,
       finalRank: userRank ? userRank.rank : finalLeaderboard.length + 1,
       topThree: topThree,
+      allPlayers: allPlayers,
       config: {
         showLeaderboard: config.ui.showLeaderboard,
         showTopThree: config.ui.showTopThree,

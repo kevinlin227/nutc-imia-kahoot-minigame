@@ -101,9 +101,9 @@
                 <div id="finalRank" class="rank-display"></div>
             </div>
 
-            <div id="topThree" style="margin: 30px 0;">
-                <h2>🏆 前三名</h2>
-                <div id="topThreeContainer"></div>
+            <div id="finalLeaderboard" style="margin: 30px 0;">
+                <h2>🏆 最終排行榜</h2>
+                <div id="finalLeaderboardContainer"></div>
             </div>
 
             <div id="gameEndButtons" style="margin-top: 30px;">
@@ -648,30 +648,45 @@
                 document.getElementById('finalRank').style.display = 'none';
             }
 
-            // 根據配置決定是否顯示前三名
-            const container = document.getElementById('topThreeContainer');
+            // 顯示完整排行榜
+            const container = document.getElementById('finalLeaderboardContainer');
             container.innerHTML = '';
 
-            if (config.showTopThree !== false && message.topThree && message.topThree.length > 0) {
-                message.topThree.forEach((player, index) => {
+            // 總是顯示完整排行榜（如果有玩家數據）
+            if (message.allPlayers && message.allPlayers.length > 0) {
+                message.allPlayers.forEach((player, index) => {
                     const rank = index + 1;
-                    const emoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
+                    let emoji = '';
+                    if (rank === 1) emoji = '🥇';
+                    else if (rank === 2) emoji = '🥈';
+                    else if (rank === 3) emoji = '🥉';
 
                     const itemElement = document.createElement('div');
-                    itemElement.className = 'leaderboard-item top3';
+                    itemElement.className = `leaderboard-item ${rank <= 3 ? 'top3' : ''}`;
                     itemElement.innerHTML = `
-                        <div style="font-size: 1.2em;">
-                            ${emoji} ${player.name}
+                        <div style="font-size: ${rank <= 3 ? '1.2em' : '1em'};">
+                            ${emoji} ${rank}. ${player.name}
                             ${player.id === gameState.userId ? ' (您)' : ''}
                         </div>
-                        <div style="font-size: 1.2em; font-weight: bold;">
+                        <div style="font-size: ${rank <= 3 ? '1.2em' : '1em'}; font-weight: bold;">
                             ${player.score} 分
                         </div>
                     `;
                     container.appendChild(itemElement);
                 });
+
+                // 如果配置要求不顯示排行榜，在排行榜後面顯示自訂結尾訊息
+                if (config.showLeaderboard === false) {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.style.cssText = 'text-align: center; padding: 30px; background: #f8f9fa; border-radius: 15px; margin: 20px 0;';
+                    messageDiv.innerHTML = `
+                        <h2 style="color: #667eea; margin-bottom: 15px;">${config.endGameMessage || '感謝參與本次知識競賽！'}</h2>
+                        <p style="color: #666; font-size: 1.1em;">${config.endGameSubMessage || '希望你在遊戲中學到了新知識。'}</p>
+                    `;
+                    container.appendChild(messageDiv);
+                }
             } else {
-                // 顯示自訂結尾訊息
+                // 如果沒有玩家數據，只顯示自訂結尾訊息
                 const messageDiv = document.createElement('div');
                 messageDiv.style.cssText = 'text-align: center; padding: 30px; background: #f8f9fa; border-radius: 15px; margin: 20px 0;';
                 messageDiv.innerHTML = `
@@ -683,7 +698,7 @@
 
             // 根據配置決定是否顯示原本的按鈕
             const buttonsContainer = document.getElementById('gameEndButtons');
-            if (config.showLeaderboard === false && config.showTopThree === false) {
+            if (config.showLeaderboard === false) {
                 // 隱藏原本的按鈕，只顯示自訂結尾訊息
                 buttonsContainer.style.display = 'none';
             } else {
