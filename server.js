@@ -877,10 +877,12 @@ function handleEndGame() {
     });
   });
 
-  // 廣播遊戲結束訊息給所有客戶端（包括管理員）
+  // 廣播遊戲結束訊息給管理員和其他客戶端
   broadcast({
     type: 'game_end',
-    status: 'finished'
+    status: 'finished',
+    topThree: topThree,
+    allPlayers: allPlayers
   });
 
   // 完成並保存遊戲記錄

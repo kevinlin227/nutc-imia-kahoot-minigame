@@ -106,9 +106,8 @@
                 <div id="finalLeaderboardContainer"></div>
             </div>
 
-            <div id="gameEndButtons" style="margin-top: 30px;">
-                <button onclick="playAgain()">🔄 再玩一次</button>
-                <button onclick="goHome()" style="background: #6c757d;">🏠 回到主頁</button>
+            <div id="gameEndButtons" style="margin-top: 30px; display: none;">
+                <!-- 按鈕已移除 -->
             </div>
         </div>
     </div>
@@ -639,12 +638,24 @@
 
             const config = message.config || {};
 
+            // 計算玩家的分數和排名（從allPlayers中查找）
+            let finalScore = message.finalScore;
+            let finalRank = message.finalRank;
+
+            if (message.allPlayers && message.allPlayers.length > 0 && gameState.userId) {
+                const playerIndex = message.allPlayers.findIndex(p => p.id === gameState.userId);
+                if (playerIndex !== -1) {
+                    finalScore = message.allPlayers[playerIndex].score;
+                    finalRank = playerIndex + 1;
+                }
+            }
+
             // 根據配置決定是否顯示分數和排名
             if (config.showLeaderboard !== false) {
-                document.getElementById('finalScore').textContent = `最終分數: ${message.finalScore}`;
-                document.getElementById('finalRank').textContent = `最終排名: 第 ${message.finalRank} 名`;
+                document.getElementById('finalScore').textContent = `最終分數: ${finalScore || 0}`;
+                document.getElementById('finalRank').textContent = `最終排名: 第 ${finalRank || '-'} 名`;
             } else {
-                document.getElementById('finalScore').textContent = `您的分數: ${message.finalScore}`;
+                document.getElementById('finalScore').textContent = `您的分數: ${finalScore || 0}`;
                 document.getElementById('finalRank').style.display = 'none';
             }
 
@@ -696,14 +707,9 @@
                 container.appendChild(messageDiv);
             }
 
-            // 根據配置決定是否顯示原本的按鈕
+            // 按鈕已在HTML中設為隱藏，不再顯示
             const buttonsContainer = document.getElementById('gameEndButtons');
-            if (config.showLeaderboard === false) {
-                // 隱藏原本的按鈕，只顯示自訂結尾訊息
-                buttonsContainer.style.display = 'none';
-            } else {
-                buttonsContainer.style.display = 'block';
-            }
+            buttonsContainer.style.display = 'none';
         }
 
         // 處理錯誤訊息
