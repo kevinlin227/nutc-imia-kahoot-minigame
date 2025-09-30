@@ -1,55 +1,56 @@
-# Kahoot類遊戲
+# 資管系小迎新2025 中科冷知識大挑戰遊戲
 
-一個使用Node.js和WebSocket實現的多人即時問答遊戲，類似Kahoot。
+一個使用 **Node.js + WebSocket** 實作的多人即時問答遊戲，類似 [Kahoot](https://kahoot.com/)
 
-## 快速開始
+## 🎮 遊戲流程介紹
 
-```bash
-# 安裝依賴
-npm install
+整體遊戲流程分為三個階段：
 
-# 啟動伺服器
-npm start
+1. **玩家加入**
+   - 玩家在首頁輸入名稱後進入等待頁面  
+   - 等待期間會顯示目前已加入的玩家清單  
+
+   ![玩家加入流程圖](/docs/home.jpg)
+
+2. **遊戲進行**
+   - 管理員後台啟動遊戲，進行倒數計時  
+   - 題目顯示後，玩家需在限時內作答  
+   - 管理員點擊公開答案結算分數該題  
+   - 即時計算分數並更新排行榜  
+
+   ![遊戲進行流程圖](/docs/game.jpg)
+
+3. **遊戲結束**
+   - 全部題目完成後，顯示最終排名  
+   - 公布前三名與各玩家的總分  
+
+   ![遊戲結束流程圖](/docs/end.jpg)
+
+## 專案結構 📂
 ```
 
-伺服器啟動後，訪問 http://localhost 開始遊戲。
+kahoot/
+├── server.js        # 伺服器主程式
+├── home/            # 主頁 (輸入名稱)
+├── game/            # 遊戲頁面
+├── admin/           # 後台管理頁面
+├── public/          # 共用靜態資源
+├── game-records/    # 遊玩紀錄保存Json
+└── config.json      # 客製化設定
 
-## 頁面導航
+````
 
-- **主頁**: http://localhost - 輸入名字加入遊戲
-- **遊戲頁**: http://localhost/game - 遊戲進行頁面
-- **後台管理**: http://localhost/admin - 管理員控制台
+## 使用方法 🚀
+### 本地運行
+```bash
+git clone https://github.com/kevinlin227/nutc-imia-kahoot-minigame
 
-## 遊戲流程
+npm install
 
-1. 玩家在主頁輸入名稱，進入遊戲等待頁面
-2. 管理員在後台點擊"開始遊戲"
-3. 3秒倒計時後開始第一題
-4. 玩家在10秒內選擇答案
-5. 管理員點擊"顯示結果"公布答案和分數
-6. 管理員點擊"下一題"繼續遊戲
-7. 所有題目完成後顯示最終排名
+npm start
+````
 
-## 特色功能
+開啟瀏覽器：
 
-- 🎮 多人實時遊戲
-- 📊 即時計分排名
-- 🔄 斷線自動重連
-- 📱 響應式設計
-- ⚡ 延遲補償
-- 🎯 管理員控制
-
-## 技術架構
-
-- **後端**: Node.js + Express + WebSocket
-- **前端**: 原生JavaScript + HTML5 + CSS3
-- **通訊**: WebSocket實時雙向通訊
-- **監聽端口**: 8080
-
-## 詳細文檔
-
-完整的架構設計和實現細節請參閱 [CLAUDE.md](CLAUDE.md)。
-
----
-
-🎯 **現在就開始遊戲吧！** 在瀏覽器中打開 http://localhost
+* 玩家入口：[http://localhost:8080](http://localhost:8080)
+* 後台管理：[http://localhost:8080/admin](http://localhost:8080/admin)
