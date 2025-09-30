@@ -196,6 +196,33 @@ button:disabled {
   font-weight: bold;
 }
 
+/* 最終排行榜容器 - 可滾動 */
+#finalLeaderboardContainer {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 10px;
+  margin-top: 20px;
+}
+
+/* 滾動條樣式 */
+#finalLeaderboardContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+#finalLeaderboardContainer::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+#finalLeaderboardContainer::-webkit-scrollbar-thumb {
+  background: #5cb8e3;
+  border-radius: 10px;
+}
+
+#finalLeaderboardContainer::-webkit-scrollbar-thumb:hover {
+  background: #5fd8d6;
+}
+
 .admin-controls {
   margin: 20px 0;
   padding: 20px;
