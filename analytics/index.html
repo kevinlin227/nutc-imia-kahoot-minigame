@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>遊戲數據分析 - 中科冷知識大挑戰</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 遊戲數據分析</h1>
+            <div id="game-info"></div>
+        </header>
+
+        <div class="dashboard">
+            <!-- 整體統計 -->
+            <section class="stats-overview">
+                <h2>📊 整體統計</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">參與人數</div>
+                        <div class="stat-value" id="total-players">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">題目數量</div>
+                        <div class="stat-value" id="total-questions">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">平均分數</div>
+                        <div class="stat-value" id="avg-score">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">平均答對率</div>
+                        <div class="stat-value" id="avg-accuracy">-</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 排行榜 -->
+            <section class="leaderboard-section">
+                <h2>🏆 玩家排行榜</h2>
+                <div class="hint">💡 點擊玩家查看詳細答題狀況</div>
+                <table id="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>排名</th>
+                            <th>玩家</th>
+                            <th>分數</th>
+                            <th>答對題數</th>
+                            <th>答對率</th>
+                            <th>平均答題時間</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body"></tbody>
+                </table>
+            </section>
+
+            <!-- 題目分析 -->
+            <section class="questions-section">
+                <h2>📝 題目分析</h2>
+                <div class="hint">💡 點擊題目查看各玩家表現</div>
+                <div id="questions-list"></div>
+            </section>
+        </div>
+
+        <!-- 玩家詳情彈窗 -->
+        <div id="player-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="player-modal-title"></h2>
+                <div id="player-modal-body"></div>
+            </div>
+        </div>
+
+        <!-- 題目詳情彈窗 -->
+        <div id="question-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="question-modal-title"></h2>
+                <div id="question-modal-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="analytics.js"></script>
+</body>
+</html>

@@ -1,0 +1,562 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+header {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+header h1 {
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 2.5em;
+}
+
+.game-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    color: #555;
+}
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* 統計卡片 */
+.stats-overview {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.stats-overview h2 {
+    color: #667eea;
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-label {
+    font-size: 0.9em;
+    opacity: 0.9;
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    font-size: 2.5em;
+    font-weight: bold;
+}
+
+/* 排行榜 */
+.leaderboard-section {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.leaderboard-section h2 {
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+.hint {
+    color: #888;
+    font-size: 0.9em;
+    margin-bottom: 20px;
+}
+
+#leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#leaderboard-table thead {
+    background: #667eea;
+    color: white;
+}
+
+#leaderboard-table th {
+    padding: 15px;
+    text-align: left;
+}
+
+#leaderboard-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.player-row {
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.player-row:hover {
+    background-color: #f0f0f0;
+}
+
+.rank-1 {
+    background: linear-gradient(90deg, #ffd70020 0%, transparent 100%);
+}
+
+.rank-2 {
+    background: linear-gradient(90deg, #c0c0c020 0%, transparent 100%);
+}
+
+.rank-3 {
+    background: linear-gradient(90deg, #cd7f3220 0%, transparent 100%);
+}
+
+/* 題目列表 */
+.questions-section {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.questions-section h2 {
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+#questions-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.question-card {
+    background: #f9f9f9;
+    border-radius: 10px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+}
+
+.question-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    border-color: #667eea;
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.question-number {
+    font-weight: bold;
+    color: #667eea;
+}
+
+.difficulty-badge {
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+.difficulty-badge.easy {
+    background: #4caf50;
+    color: white;
+}
+
+.difficulty-badge.medium {
+    background: #ff9800;
+    color: white;
+}
+
+.difficulty-badge.hard {
+    background: #f44336;
+    color: white;
+}
+
+.question-text {
+    color: #333;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.question-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.stat-icon {
+    font-size: 1.2em;
+}
+
+/* 彈窗 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 1000px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.modal-content h2 {
+    color: #667eea;
+    margin-bottom: 20px;
+}
+
+.modal-content h3 {
+    color: #764ba2;
+    margin: 25px 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+}
+
+/* 玩家詳情 */
+.player-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.summary-item {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.answers-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.answer-item {
+    background: #f9f9f9;
+    border-radius: 10px;
+    padding: 15px;
+    border-left: 4px solid #ccc;
+}
+
+.answer-item.correct {
+    border-left-color: #4caf50;
+    background: #f1f8f4;
+}
+
+.answer-item.incorrect {
+    border-left-color: #f44336;
+    background: #fef5f5;
+}
+
+.answer-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.answer-status {
+    font-size: 1.5em;
+}
+
+.answer-question-num {
+    font-weight: bold;
+    color: #667eea;
+}
+
+.answer-time {
+    background: #667eea;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 15px;
+    font-size: 0.85em;
+}
+
+.answer-score {
+    background: #4caf50;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+.answer-question {
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.answer-options {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.correct-answer {
+    color: #4caf50;
+}
+
+/* 題目詳情 */
+.question-detail-header {
+    margin-bottom: 30px;
+}
+
+.question-text-large {
+    font-size: 1.3em;
+    color: #333;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 10px;
+}
+
+.question-stats-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.stat-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 0.9em;
+    opacity: 0.9;
+    margin-bottom: 5px;
+}
+
+.stat-value-large {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.options-distribution {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.option-bar {
+    background: #f9f9f9;
+    border-radius: 10px;
+    padding: 15px;
+    border: 2px solid #eee;
+}
+
+.option-bar.correct-option {
+    background: #f1f8f4;
+    border-color: #4caf50;
+}
+
+.option-label {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.option-stats {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.bar-container {
+    flex: 1;
+    height: 25px;
+    background: #e0e0e0;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.5s ease;
+}
+
+.option-bar.correct-option .bar-fill {
+    background: linear-gradient(90deg, #4caf50 0%, #66bb6a 100%);
+}
+
+.option-count {
+    font-weight: bold;
+    color: #667eea;
+    min-width: 100px;
+    text-align: right;
+}
+
+.players-performance table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.players-performance thead {
+    background: #667eea;
+    color: white;
+}
+
+.players-performance th {
+    padding: 12px;
+    text-align: left;
+}
+
+.players-performance td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.correct-row {
+    background: #f1f8f4;
+}
+
+.incorrect-row {
+    background: #fef5f5;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.8em;
+    }
+
+    .game-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #questions-list {
+        grid-template-columns: 1fr;
+    }
+
+    #leaderboard-table {
+        font-size: 0.9em;
+    }
+
+    #leaderboard-table th,
+    #leaderboard-table td {
+        padding: 10px 5px;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+        margin: 10% auto;
+    }
+
+    .player-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .question-stats-summary {
+        grid-template-columns: 1fr;
+    }
+}
