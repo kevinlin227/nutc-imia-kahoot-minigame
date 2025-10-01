@@ -13,10 +13,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+// 獲取URL參數
+function getGameIdFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('gameId');
+}
+
 // 載入遊戲數據
 async function loadGameData() {
     try {
-        const response = await fetch('../game-records/game_2025-10-01_164937_ybddpc.json');
+        const gameId = getGameIdFromURL();
+        let url;
+
+        if (gameId) {
+            // 從URL參數獲取gameId
+            url = `/game-records/${gameId}.json`;
+        } else {
+            // 使用預設的遊戲記錄
+            url = '/game-records/game_2025-10-01_164937_ybddpc.json';
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`無法載入遊戲數據: ${response.status}`);
+        }
         gameData = await response.json();
     } catch (error) {
         console.error('無法載入遊戲數據:', error);

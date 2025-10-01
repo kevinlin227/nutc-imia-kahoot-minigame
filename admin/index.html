@@ -442,6 +442,11 @@
                 <h2>🎉 遊戲已結束 🎉</h2>
                 <p>所有題目已完成！</p>
                 <p>感謝所有玩家的參與！</p>
+                <div id="analyticsButton" style="margin-top: 20px; display: none;">
+                    <button onclick="openAnalytics()" style="background: white; color: #667eea; font-size: 1.2em; padding: 15px 30px;">
+                        📊 查看數據分析
+                    </button>
+                </div>
             </div>
 
             <!-- 即時監控面板 -->
@@ -553,7 +558,9 @@
             // 配置
             config: {
                 questionTimeLimit: 10000 // 預設值
-            }
+            },
+            // 遊戲ID (用於數據分析)
+            gameId: null
         };
 
         // WebSocket連接
@@ -687,11 +694,20 @@
         // 處理遊戲結束
         function handleGameEnd(message) {
             adminState.gameStatus = 'finished';
+            adminState.gameId = message.gameId;
             updateGameStatus();
             updateControlButtons();
             hideAllCountdowns();
             showGameFinishedBanner();
-            addLog('遊戲結束', 'info');
+
+            // 顯示數據分析按鈕
+            if (message.gameId) {
+                const analyticsBtn = document.getElementById('analyticsButton');
+                analyticsBtn.style.display = 'block';
+                addLog(`遊戲結束 - 數據分析可用 (ID: ${message.gameId})`, 'info');
+            } else {
+                addLog('遊戲結束', 'info');
+            }
         }
 
         // 處理管理員遊戲開始倒計時
@@ -1252,6 +1268,16 @@
             updatePlayerCount();
             updateCurrentQuestion();
             updateControlButtons();
+        }
+
+        // 打開數據分析頁面
+        function openAnalytics() {
+            if (adminState.gameId) {
+                // 在新視窗打開數據分析頁面
+                window.open(`/analytics?gameId=${adminState.gameId}`, '_blank');
+            } else {
+                alert('暫無可用的遊戲數據');
+            }
         }
 
         // 初始化

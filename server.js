@@ -350,6 +350,8 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/home', express.static(path.join(__dirname, 'home')));
 app.use('/game', express.static(path.join(__dirname, 'game')));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
+app.use('/analytics', express.static(path.join(__dirname, 'analytics')));
+app.use('/game-records', express.static(path.join(__dirname, 'game-records')));
 
 // 根路由重定向到主頁
 app.get('/', (req, res) => {
@@ -891,12 +893,17 @@ function handleEndGame() {
     });
   });
 
+  // 完成並保存遊戲記錄
+  const saveResult = finalizeAndSaveGameRecord();
+  const gameId = saveResult ? currentGameRecord.gameId : null;
+
   // 廣播遊戲結束訊息給管理員和其他客戶端
   broadcast({
     type: 'game_end',
     status: 'finished',
     topThree: topThree,
     allPlayers: allPlayers,
+    gameId: gameId,
     config: {
       showLeaderboard: config.ui.showLeaderboard,
       showTopThree: config.ui.showTopThree,
@@ -905,8 +912,6 @@ function handleEndGame() {
     }
   });
 
-  // 完成並保存遊戲記錄
-  const saveResult = finalizeAndSaveGameRecord();
   if (saveResult) {
     console.log(`遊戲結束 - 記錄已保存至: ${saveResult.summary.fileName}`);
   }
