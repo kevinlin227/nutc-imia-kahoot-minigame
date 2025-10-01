@@ -452,7 +452,7 @@
                         遊戲開始倒計時: <span id="gameCountdownValue">3</span>
                     </div>
                     <div id="questionCountdown" class="countdown-display">
-                        題目倒計時: <span id="questionCountdownValue">10</span>
+                        題目倒計時: <span id="questionCountdownValue">--</span>
                     </div>
                     <div id="nextQuestionCountdown" class="countdown-display">
                         下一題倒計時: <span id="nextQuestionCountdownValue">3</span>
@@ -549,14 +549,39 @@
             pageSize: 20,
             sortBy: 'score',
             searchTerm: '',
-            filteredUsers: []
+            filteredUsers: [],
+            // 配置
+            config: {
+                questionTimeLimit: 10000 // 預設值
+            }
         };
 
         // WebSocket連接
         const ws = new GameWebSocket();
 
+        // 載入遊戲配置
+        async function loadGameConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+
+                // 保存配置到管理狀態
+                adminState.config = config;
+
+                // 更新初始計時器顯示
+                const timeLimitSeconds = Math.floor(config.questionTimeLimit / 1000);
+                document.getElementById('questionCountdownValue').textContent = timeLimitSeconds;
+
+                console.log('管理員配置已載入，題目時限:', config.questionTimeLimit, 'ms');
+            } catch (error) {
+                console.log('無法載入遊戲配置，使用預設值');
+            }
+        }
+
         // 初始化
         function init() {
+            // 先載入配置
+            loadGameConfig();
             // 設置WebSocket事件處理
             ws.onopen = () => {
                 addLog('已連接到遊戲伺服器', 'info');
@@ -677,9 +702,11 @@
         // 處理管理員題目開始
         function handleAdminQuestionStart(message) {
             hideAllCountdowns();
-            showQuestionCountdown(10, false); // 使用客戶端10秒倒計時
+            // 從訊息中獲取時間限制（毫秒轉秒）
+            const timeLimitSeconds = message.timeLimit ? Math.floor(message.timeLimit / 1000) : 10;
+            showQuestionCountdown(timeLimitSeconds, false);
             resetAnswerStats();
-            addLog(`第 ${message.questionIndex + 1} 題: ${message.question.question}`, 'info');
+            addLog(`第 ${message.questionIndex + 1} 題: ${message.question.question} (${timeLimitSeconds}秒)`, 'info');
         }
 
 

@@ -48,7 +48,7 @@
                     <div id="questionCounter" style="color: #667eea; font-weight: bold;"></div>
                     <div id="playerScore" class="score-display">分數: 0</div>
                 </div>
-                <div id="gameTimer" class="timer">10</div>
+                <div id="gameTimer" class="timer">--</div>
             </div>
 
             <div id="questionContainer" class="question-container">
@@ -115,22 +115,6 @@
 
     <script src="/public/js/common.js"></script>
     <script>
-        // 載入遊戲配置
-        async function loadGameConfig() {
-            try {
-                const response = await fetch('/api/config');
-                const config = await response.json();
-
-                // 更新頁面標題
-                document.getElementById('pageTitle').textContent = config.gameName;
-                document.title = config.gameName;
-            } catch (error) {
-                console.log('無法載入遊戲配置，使用預設值');
-            }
-        }
-
-        // 載入配置
-        loadGameConfig();
         // 遊戲狀態
         const gameState = {
             currentScreen: 'waiting',
@@ -142,8 +126,37 @@
             questionStartTime: null,
             timers: [],
             localTimers: [], // 客戶端計時器
-            isJoining: false // 防止重複加入
+            isJoining: false, // 防止重複加入
+            config: {
+                questionTimeLimit: 10000 // 預設值
+            }
         };
+
+        // 載入遊戲配置
+        async function loadGameConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+
+                // 保存配置到遊戲狀態
+                gameState.config = config;
+
+                // 更新頁面標題
+                document.getElementById('pageTitle').textContent = config.gameName;
+                document.title = config.gameName;
+
+                // 更新初始計時器顯示
+                const timeLimitSeconds = Math.floor(config.questionTimeLimit / 1000);
+                document.getElementById('gameTimer').textContent = timeLimitSeconds;
+
+                console.log('遊戲配置已載入，題目時限:', config.questionTimeLimit, 'ms');
+            } catch (error) {
+                console.log('無法載入遊戲配置，使用預設值');
+            }
+        }
+
+        // 載入配置
+        loadGameConfig();
 
         // WebSocket連接
         const ws = new GameWebSocket();
@@ -397,9 +410,11 @@
                 loadQuestion(message.questionIndex);
             }
 
-            // 使用客戶端10秒計時器
-            console.log('開始計時器');
-            startQuestionTimer(10);
+            // 使用客戶端計時器，從消息、題目數據或配置中獲取時間限制（毫秒轉秒）
+            const timeLimit = message.question?.timeLimit || gameState.questions[message.questionIndex]?.timeLimit || gameState.config.questionTimeLimit || 10000;
+            const timeLimitSeconds = Math.floor(timeLimit / 1000);
+            console.log('開始計時器，時間限制:', timeLimitSeconds, '秒');
+            startQuestionTimer(timeLimitSeconds);
         }
 
         // 載入題目

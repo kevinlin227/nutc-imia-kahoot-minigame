@@ -360,6 +360,7 @@ app.get('/', (req, res) => {
 app.get('/api/config', (req, res) => {
   res.json({
     gameName: config.game.name,
+    questionTimeLimit: config.game.questionTimeLimit,
     ui: {
       endGameMessage: config.ui.endGameMessage,
       endGameSubMessage: config.ui.endGameSubMessage,
