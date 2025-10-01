@@ -30,15 +30,15 @@
     }
   },
   "scoring": {
-    "baseScore": 100,
+    "baseScore": 1000,
     "rankBonus": {
-      "maxRankBonus": 50,
+      "maxRankBonus": 200,
       "minRankBonus": 10,
       "rankDecrement": 10
     },
     "timeBonus": {
-      "maxTimeBonus": 100,
-      "minTimeBonus": 10,
+      "maxTimeBonus": 500,
+      "minTimeBonus": 0,
       "perfectTimeThreshold": 1000,
       "maxTime": 20000
     }
