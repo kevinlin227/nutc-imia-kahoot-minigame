@@ -2,13 +2,106 @@
   {
     "question": "臺中科大「資訊管理系」屬於哪一個學院？",
     "options": ["商學院", "設計學院", "語文學院", "智慧產業學院"],
-    "correctAnswer": 0,
-    "timeLimit": 10000
+    "correctAnswer": 0
   },
   {
     "question": "下列哪一項最不可能出現在資管課程裡？",
     "options": ["ERP", "CRM", "SCM", "KFC"],
-    "correctAnswer": 3,
-    "timeLimit": 10000
+    "correctAnswer": 3
+  },
+  {
+    "question": "資管系的「資」指的是什麼？",
+    "options": ["資訊", "資金", "資優", "資敵（資深敵人？）"],
+    "correctAnswer": 0
+  },
+  {
+    "question": "台灣最近加強保護什麼重要設施？",
+    "options": ["海底電纜", "海底寶藏", "海底餐廳", "海底總動員"],
+    "correctAnswer": 0
+  },
+  {
+    "question": "TSMC(台積電) 最近發生什麼事？",
+    "options": ["機密差點被偷走", "晶片變成餅乾", "老闆去開演唱會", "工廠變遊樂園"],
+    "correctAnswer": 0
+  },
+  {
+    "question": "AI 用得越多，什麼東西會不夠用？",
+    "options": ["硬碟空間", "教室桌椅", "飯堂餐盒", "新生制服"],
+    "correctAnswer": 0
+  },
+  {
+    "question": "「晶片外交」是什麼意思？",
+    "options": ["用晶片交朋友", "用晶片打遊戲", "晶片做成飾品", "晶片當早餐"],
+    "correctAnswer": 0
+  },
+  {
+    "question": "資管系主任的名字是？",
+    "options": ["范冰冰", "姜琇森", "王建民", "周杰倫"],
+    "correctAnswer": 1
+  },
+  {
+    "question": "如果有人問「資管到底在學什麼？」最正確的答案是？",
+    "options": ["電腦相關啦", "打 LOL", "打麻將", "打瞌睡"],
+    "correctAnswer": 0
+  },
+  {
+    "question": "「資應二甲」的資應應該是什麼意思？",
+    "options": ["資源回收應用班", "資訊應用菁英班", "資深應援班", "自願應召班"],
+    "correctAnswer": 1
+  },
+  {
+    "question": "「資管二甲」的資管應該是什麼意思？",
+    "options": ["資訊管理系", "資深水管系", "多利多資管飽系", "資工切水管系"],
+    "correctAnswer": 0
+  },
+  {
+    "question": "中科大距離台北101最近的一棟樓是哪一棟?",
+    "options": ["中商大樓", "中正大樓", "昌明樓", "奇秀樓"],
+    "correctAnswer": 3
+  },
+  {
+    "question": "中科大附近沒有以下哪個飲料店?",
+    "options": ["茶湯會", "得正", "50嵐", "拾汣茶屋"],
+    "correctAnswer": 0
+  },
+  {
+    "question": "校歌中提到哪一座山？",
+    "options": ["阿里山", "玉山", "雪山", "合歡山"],
+    "correctAnswer": 1
+  },
+  {
+    "question": "台中科技大學的創校年份是？",
+    "options": ["1919", "1929", "1945", "1959"],
+    "correctAnswer": 0
+  },
+  {
+    "question": "中科大最早的校名是什麼？",
+    "options": ["台中商業職業學校", "台中商業專科學校", "台中高等工業學校", "台中市立商專"],
+    "correctAnswer": 1
+  },
+  {
+    "question": "中科大校徽中央的圖案，其實是什麼字的變形？",
+    "options": ["「中」", "「科」", "「大」", "「商」"],
+    "correctAnswer": 0
+  },
+  {
+    "question": "三民校區原本主要是哪個科系在使用？",
+    "options": ["工程學院", "醫護學院", "設計學院", "商學院"],
+    "correctAnswer": 1
+  },
+  {
+    "question": "中科大的英文全名是？",
+    "options": ["National Taichung University of Science and Technology", "National Taichung Technical College", "Taichung University of Commerce and Technology", "National Central University of Science and Technology"],
+    "correctAnswer": 0
+  },
+  {
+    "question": "科大的英文縮寫是？",
+    "options": ["NTCUST", "TUST", "NTCU", "NTUST"],
+    "correctAnswer": 0
+  },
+  {
+    "question": "中科大的哪一棟樓沒有電梯？",
+    "options": ["奇秀樓", "中正大樓", "資訊樓", "學生活動中心"],
+    "correctAnswer": 0
   }
 ]

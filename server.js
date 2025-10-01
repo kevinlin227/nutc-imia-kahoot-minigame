@@ -19,7 +19,8 @@ try {
     game: {
       name: "知識競賽遊戲",
       startCountdown: 3,
-      nextQuestionCountdown: 3
+      nextQuestionCountdown: 3,
+      questionTimeLimit: 10000
     },
     ui: {
       endGameMessage: "感謝參與本次知識競賽！",
@@ -285,7 +286,7 @@ function calculateScore(isCorrect, timeSpent, rank, totalParticipants = 1) {
     // 如果沒有時間獎勵配置，使用簡單的時間獎勵系統
     const maxTimeBonus = config.scoring.maxTimeBonus || 50;
     const minTimeBonus = config.scoring.minTimeBonus || 10;
-    const maxTime = 10000; // 10秒
+    const maxTime = config.game.questionTimeLimit;
 
     if (timeSpent <= maxTime) {
       // 越快答越多分
@@ -492,7 +493,7 @@ function handleUserJoin(ws, message) {
     questions: questions.map(q => ({
       question: q.question,
       options: q.options,
-      timeLimit: q.timeLimit || 10000 // 預設10秒
+      timeLimit: config.game.questionTimeLimit
     })) // 不包含答案
   }));
 
@@ -536,7 +537,7 @@ function handleUserReconnect(ws, message) {
     questions: questions.map(q => ({
       question: q.question,
       options: q.options,
-      timeLimit: q.timeLimit || 10000 // 預設10秒
+      timeLimit: config.game.questionTimeLimit
     })) // 不包含答案
   };
 
@@ -704,7 +705,7 @@ function startQuestion(questionIndex) {
 
   const question = questions[questionIndex];
 
-  const timeLimit = question.timeLimit || 10000; // 預設10秒
+  const timeLimit = config.game.questionTimeLimit;
 
   broadcast({
     type: 'question_start',
