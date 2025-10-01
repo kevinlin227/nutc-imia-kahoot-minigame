@@ -844,6 +844,17 @@ function handleShowResults() {
     type: 'show_results'
   });
 
+  // 廣播更新後的用戶列表給所有人（包括管理員）
+  broadcast({
+    type: 'users_update',
+    users: Array.from(gameState.users.values()).map(u => ({
+      id: u.id,
+      name: u.name,
+      connected: u.connected,
+      score: u.score
+    }))
+  });
+
   console.log(`顯示第 ${gameState.currentQuestion + 1} 題結果`);
 }
 
