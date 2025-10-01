@@ -3,13 +3,22 @@ let gameData = null;
 
 // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadGameData();
-    if (gameData) {
-        displayGameInfo();
-        displayOverallStats();
-        displayLeaderboard();
-        displayQuestions();
-        setupModalHandlers();
+    const gameId = getGameIdFromURL();
+
+    if (gameId) {
+        // 有gameId參數,載入特定遊戲數據
+        document.getElementById('backToListBtn').style.display = 'block';
+        await loadGameData();
+        if (gameData) {
+            displayGameInfo();
+            displayOverallStats();
+            displayLeaderboard();
+            displayQuestions();
+            setupModalHandlers();
+        }
+    } else {
+        // 沒有gameId參數,顯示遊戲記錄列表
+        await displayGameRecordsList();
     }
 });
 
@@ -23,15 +32,7 @@ function getGameIdFromURL() {
 async function loadGameData() {
     try {
         const gameId = getGameIdFromURL();
-        let url;
-
-        if (gameId) {
-            // 從URL參數獲取gameId
-            url = `/game-records/${gameId}.json`;
-        } else {
-            // 使用預設的遊戲記錄
-            url = '/game-records/game_2025-10-01_164937_ybddpc.json';
-        }
+        const url = `/game-records/${gameId}.json`;
 
         const response = await fetch(url);
         if (!response.ok) {
@@ -42,6 +43,101 @@ async function loadGameData() {
         console.error('無法載入遊戲數據:', error);
         alert('無法載入遊戲數據,請確認檔案路徑是否正確');
     }
+}
+
+// 顯示遊戲記錄列表
+async function displayGameRecordsList() {
+    try {
+        const response = await fetch('/api/game-records');
+        if (!response.ok) {
+            throw new Error('無法載入遊戲記錄列表');
+        }
+        const records = await response.json();
+
+        // 隱藏儀表板,顯示記錄列表
+        document.querySelector('.dashboard').style.display = 'none';
+        document.querySelector('header h1').textContent = '🎮 遊戲數據記錄';
+
+        const gameInfo = document.getElementById('game-info');
+        gameInfo.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <p style="font-size: 1.1em; color: #666;">選擇一場遊戲查看詳細數據分析</p>
+            </div>
+        `;
+
+        const container = document.querySelector('.container');
+        const listSection = document.createElement('section');
+        listSection.className = 'game-records-list';
+        listSection.innerHTML = `
+            <div style="background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);">
+                <h2 style="color: #5cb8e3; margin-bottom: 20px;">歷史遊戲記錄</h2>
+                ${records.length === 0 ?
+                    '<p style="text-align: center; color: #666; padding: 40px;">暫無遊戲記錄</p>' :
+                    '<div id="records-container"></div>'
+                }
+            </div>
+        `;
+
+        container.appendChild(listSection);
+
+        if (records.length > 0) {
+            const recordsContainer = document.getElementById('records-container');
+            records.forEach(record => {
+                const card = createGameRecordCard(record);
+                recordsContainer.appendChild(card);
+            });
+        }
+    } catch (error) {
+        console.error('載入遊戲記錄列表失敗:', error);
+        alert('無法載入遊戲記錄列表');
+    }
+}
+
+// 創建遊戲記錄卡片
+function createGameRecordCard(record) {
+    const card = document.createElement('div');
+    card.className = 'game-record-card';
+
+    const startTime = new Date(record.startTime);
+    const endTime = new Date(record.endTime);
+    const duration = Math.floor(record.duration / 1000 / 60);
+
+    card.innerHTML = `
+        <div class="record-header">
+            <h3>${record.gameName}</h3>
+            <span class="record-date">${startTime.toLocaleString('zh-TW', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            })}</span>
+        </div>
+        <div class="record-stats">
+            <div class="record-stat">
+                <span class="stat-icon">👥</span>
+                <span>${record.participants} 位玩家</span>
+            </div>
+            <div class="record-stat">
+                <span class="stat-icon">📝</span>
+                <span>${record.questions} 道題目</span>
+            </div>
+            <div class="record-stat">
+                <span class="stat-icon">⏱️</span>
+                <span>${duration} 分鐘</span>
+            </div>
+        </div>
+        <button class="view-analytics-btn" onclick="viewGameAnalytics('${record.gameId}')">
+            查看數據分析 →
+        </button>
+    `;
+
+    return card;
+}
+
+// 查看遊戲分析
+function viewGameAnalytics(gameId) {
+    window.location.href = `/analytics?gameId=${gameId}`;
 }
 
 // 顯示遊戲基本信息

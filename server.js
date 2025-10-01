@@ -373,6 +373,45 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+// 提供遊戲記錄列表API
+app.get('/api/game-records', (req, res) => {
+  try {
+    const files = fs.readdirSync(RECORDS_DIR)
+      .filter(file => file.endsWith('.json'))
+      .map(file => {
+        const filePath = path.join(RECORDS_DIR, file);
+        const stats = fs.statSync(filePath);
+
+        try {
+          const content = fs.readFileSync(filePath, 'utf8');
+          const gameData = JSON.parse(content);
+
+          return {
+            gameId: gameData.gameId,
+            fileName: file,
+            gameName: gameData.gameInfo.name,
+            startTime: gameData.gameInfo.startTime,
+            endTime: gameData.gameInfo.endTime,
+            duration: gameData.gameInfo.duration,
+            participants: gameData.participants.length,
+            questions: gameData.questions.length,
+            createdAt: stats.mtime
+          };
+        } catch (error) {
+          console.error(`解析遊戲記錄失敗: ${file}`, error);
+          return null;
+        }
+      })
+      .filter(item => item !== null)
+      .sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+
+    res.json(files);
+  } catch (error) {
+    console.error('讀取遊戲記錄列表失敗:', error);
+    res.status(500).json({ error: '無法讀取遊戲記錄列表' });
+  }
+});
+
 // 創建HTTP伺服器
 const server = app.listen(PORT, () => {
   console.log(`Kahoot遊戲伺服器運行在 http://localhost:${PORT}`);

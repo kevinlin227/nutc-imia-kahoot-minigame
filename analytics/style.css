@@ -519,8 +519,96 @@ header h1 {
     background: #fef5f5;
 }
 
+/* 遊戲記錄列表 */
+.game-records-list {
+    margin-top: 30px;
+}
+
+#records-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.game-record-card {
+    background: #f9f9f9;
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+}
+
+.game-record-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    border-color: #5cb8e3;
+}
+
+.record-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #eee;
+}
+
+.record-header h3 {
+    color: #333;
+    margin: 0;
+    font-size: 1.2em;
+    flex: 1;
+}
+
+.record-date {
+    font-size: 0.85em;
+    color: #666;
+    white-space: nowrap;
+    margin-left: 10px;
+}
+
+.record-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.record-stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95em;
+    color: #555;
+}
+
+.record-stat .stat-icon {
+    font-size: 1.2em;
+}
+
+.view-analytics-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #5fd8d6 0%, #5cb8e3 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.view-analytics-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(92, 184, 227, 0.4);
+}
+
 /* 響應式設計 */
 @media (max-width: 768px) {
+    #records-container {
+        grid-template-columns: 1fr;
+    }
     header h1 {
         font-size: 1.8em;
     }
