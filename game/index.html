@@ -91,6 +91,7 @@
         <div id="nextQuestionScreen" class="hidden">
             <h2>➡️ 下一題準備中</h2>
             <div id="nextCountdown" class="countdown">3</div>
+            <div id="nextQuestionPreview" class="question" style="margin-top: 30px; font-size: 1.5em; color: #333; padding: 20px; background: #f8f9fa; border-radius: 15px;"></div>
         </div>
 
         <!-- 最終結果畫面 -->
@@ -128,7 +129,9 @@
             localTimers: [], // 客戶端計時器
             isJoining: false, // 防止重複加入
             config: {
-                questionTimeLimit: 10000 // 預設值
+                questionTimeLimit: 10000, // 預設值
+                startCountdown: 3, // 預設值
+                nextQuestionCountdown: 3 // 預設值
             }
         };
 
@@ -149,9 +152,17 @@
                 const timeLimitSeconds = Math.floor(config.questionTimeLimit / 1000);
                 document.getElementById('gameTimer').textContent = timeLimitSeconds;
 
-                console.log('遊戲配置已載入，題目時限:', config.questionTimeLimit, 'ms');
+                console.log('遊戲配置已載入');
+                console.log('- 題目時限:', config.questionTimeLimit, 'ms');
+                console.log('- 題目倒計時:', config.nextQuestionCountdown, '秒');
             } catch (error) {
                 console.log('無法載入遊戲配置，使用預設值');
+                // 設置預設值
+                gameState.config = {
+                    questionTimeLimit: 10000,
+                    startCountdown: 3,
+                    nextQuestionCountdown: 3
+                };
             }
         }
 
@@ -383,8 +394,9 @@
             switchScreen('startCountdown');
 
             const countdownElement = document.getElementById('startCountdown');
-            // 使用客戶端倒計時，3秒固定
-            startClientCountdown(countdownElement, 3, () => {
+            // 使用配置中的倒計時秒數
+            const countdownSeconds = gameState.config.startCountdown || 3;
+            startClientCountdown(countdownElement, countdownSeconds, () => {
                 // 倒計時結束後等待第一題
                 console.log('遊戲開始倒計時完成，等待第一題');
             });
@@ -394,56 +406,50 @@
         function handleQuestionStart(message) {
             console.log('處理題目開始:', message);
             gameState.currentQuestion = message.questionIndex;
-            gameState.questionStartTime = Date.now(); // 使用本地時間
             gameState.selectedAnswer = null;
-
-            console.log('切換到遊戲畫面');
-            switchScreen('game');
 
             // 獲取題目數據
             const question = message.question || gameState.questions[message.questionIndex];
 
-            // 先載入題目文字和題號，但不載入選項
-            if (question) {
-                document.getElementById('questionCounter').textContent =
-                    `第 ${message.questionIndex + 1} 題 / 共 ${gameState.totalQuestions} 題`;
-                document.getElementById('questionText').textContent = question.question;
-                document.getElementById('optionsContainer').innerHTML = ''; // 清空選項
-                document.getElementById('answerIndicator').textContent = '';
+            // 切換到倒計時畫面並顯示題目
+            console.log('切換到倒計時畫面並顯示題目');
+            switchScreen('nextQuestion');
+
+            // 在倒計時畫面顯示題目
+            const previewElement = document.getElementById('nextQuestionPreview');
+            if (previewElement && question) {
+                previewElement.textContent = question.question;
             }
 
-            // 顯示準備倒計時
-            const timerElement = document.getElementById('gameTimer');
-            timerElement.textContent = '準備中...';
-            timerElement.style.color = '#667eea';
-            timerElement.style.animation = '';
+            // 從配置中獲取倒計時秒數
+            const countdownSeconds = gameState.config.nextQuestionCountdown || 3;
+            const countdownElement = document.getElementById('nextCountdown');
 
-            // 開始3秒準備倒計時
-            let countdown = 3;
-            timerElement.textContent = countdown;
+            // 開始倒計時
+            startClientCountdown(countdownElement, countdownSeconds, () => {
+                console.log('倒計時完成，切換到遊戲畫面並顯示選項');
 
-            const prepTimer = setInterval(() => {
-                countdown--;
-                if (countdown <= 0) {
-                    clearInterval(prepTimer);
-                    // 倒計時結束，載入選項並開始作答計時
-                    if (message.question) {
-                        loadQuestionOptions(message.questionIndex, message.question);
-                    } else {
-                        loadQuestionOptions(message.questionIndex, gameState.questions[message.questionIndex]);
-                    }
+                // 現在才設置開始時間（倒計時結束後）
+                gameState.questionStartTime = Date.now();
 
-                    // 開始作答計時
-                    const timeLimit = message.question?.timeLimit || gameState.questions[message.questionIndex]?.timeLimit || gameState.config.questionTimeLimit || 10000;
-                    const timeLimitSeconds = Math.floor(timeLimit / 1000);
-                    console.log('開始計時器，時間限制:', timeLimitSeconds, '秒');
-                    startQuestionTimer(timeLimitSeconds);
+                // 切換到遊戲畫面
+                switchScreen('game');
+
+                // 載入題目和選項
+                if (message.question) {
+                    console.log('使用消息中的題目數據:', message.question);
+                    loadQuestionFromData(message.questionIndex, message.question);
                 } else {
-                    timerElement.textContent = countdown;
+                    console.log('從gameState載入題目:', message.questionIndex);
+                    loadQuestion(message.questionIndex);
                 }
-            }, 1000);
 
-            gameState.localTimers.push(prepTimer);
+                // 開始作答計時
+                const timeLimit = message.question?.timeLimit || gameState.questions[message.questionIndex]?.timeLimit || gameState.config.questionTimeLimit || 10000;
+                const timeLimitSeconds = Math.floor(timeLimit / 1000);
+                console.log('開始計時器，時間限制:', timeLimitSeconds, '秒');
+                startQuestionTimer(timeLimitSeconds);
+            });
         }
 
         // 載入題目選項
@@ -693,9 +699,16 @@
         function handleNextQuestionCountdown(message) {
             switchScreen('nextQuestion');
 
+            // 清空題目預覽（等待下一題）
+            const previewElement = document.getElementById('nextQuestionPreview');
+            if (previewElement) {
+                previewElement.textContent = '';
+            }
+
             const countdownElement = document.getElementById('nextCountdown');
-            // 使用客戶端倒計時，3秒固定
-            startClientCountdown(countdownElement, 3, () => {
+            // 使用配置中的倒計時秒數
+            const countdownSeconds = gameState.config.nextQuestionCountdown || 3;
+            startClientCountdown(countdownElement, countdownSeconds, () => {
                 // 倒計時結束後等待下一題
                 console.log('下一題倒計時完成');
             });
