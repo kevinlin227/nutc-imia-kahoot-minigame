@@ -791,10 +791,20 @@ function handleNextQuestion() {
     return;
   }
 
-  // 發送下一題倒計時
+  // 獲取下一題的題目數據（不包含答案）
+  const nextQuestion = {
+    question: questions[nextIndex].question,
+    options: questions[nextIndex].options,
+    timeLimit: questions[nextIndex].timeLimit
+  };
+
+  // 發送下一題倒計時，包含題目數據
   broadcast({
     type: 'next_question_countdown',
-    countdown: config.game.nextQuestionCountdown
+    countdown: config.game.nextQuestionCountdown,
+    questionIndex: nextIndex,
+    question: nextQuestion,
+    totalQuestions: questions.length
   });
 
   // 向管理員發送下一題倒計時
