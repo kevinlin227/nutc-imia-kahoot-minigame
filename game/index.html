@@ -408,38 +408,6 @@
             gameState.currentQuestion = message.questionIndex;
             gameState.selectedAnswer = null;
 
-            // 獲取題目數據
-            const question = message.question || gameState.questions[message.questionIndex];
-
-            // 如果是第一題（索引為0），需要先顯示題目倒計時
-            if (message.questionIndex === 0) {
-                console.log('第一題，切換到倒計時畫面並顯示題目');
-                switchScreen('nextQuestion');
-
-                // 在倒計時畫面顯示題目
-                const previewElement = document.getElementById('nextQuestionPreview');
-                if (previewElement && question) {
-                    previewElement.textContent = question.question;
-                }
-
-                // 從配置中獲取倒計時秒數
-                const countdownSeconds = gameState.config.nextQuestionCountdown || 3;
-                const countdownElement = document.getElementById('nextCountdown');
-
-                // 開始倒計時
-                startClientCountdown(countdownElement, countdownSeconds, () => {
-                    console.log('倒計時完成，開始第一題');
-                    startQuestionAnswering(message);
-                });
-            } else {
-                // 不是第一題，直接開始作答（因為已經在 handleNextQuestionCountdown 中顯示過題目了）
-                console.log('非第一題，直接開始作答');
-                startQuestionAnswering(message);
-            }
-        }
-
-        // 開始題目作答
-        function startQuestionAnswering(message) {
             // 設置開始時間
             gameState.questionStartTime = Date.now();
 

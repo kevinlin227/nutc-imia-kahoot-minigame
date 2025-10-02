@@ -728,12 +728,41 @@ function handleStartGame() {
     countdown: config.game.startCountdown
   });
 
-  // 配置秒數後開始第一題
+  // 配置秒數後開始第一題（先發送題目預覽倒計時）
   setTimeout(() => {
-    startQuestion(0);
+    showQuestionCountdown(0);
   }, config.game.startCountdown * 1000);
 
   console.log('遊戲開始');
+}
+
+// 顯示題目倒計時（包含題目預覽）
+function showQuestionCountdown(questionIndex) {
+  const question = {
+    question: questions[questionIndex].question,
+    options: questions[questionIndex].options,
+    timeLimit: config.game.questionTimeLimit
+  };
+
+  // 發送題目倒計時，包含題目數據
+  broadcast({
+    type: 'next_question_countdown',
+    countdown: config.game.nextQuestionCountdown,
+    questionIndex: questionIndex,
+    question: question,
+    totalQuestions: questions.length
+  });
+
+  // 向管理員發送題目倒計時
+  broadcastToAdmins({
+    type: 'admin_next_question_countdown',
+    countdown: config.game.nextQuestionCountdown
+  });
+
+  // 倒計時結束後開始題目作答
+  setTimeout(() => {
+    startQuestion(questionIndex);
+  }, config.game.nextQuestionCountdown * 1000);
 }
 
 // 開始新題目
@@ -791,32 +820,8 @@ function handleNextQuestion() {
     return;
   }
 
-  // 獲取下一題的題目數據（不包含答案）
-  const nextQuestion = {
-    question: questions[nextIndex].question,
-    options: questions[nextIndex].options,
-    timeLimit: questions[nextIndex].timeLimit
-  };
-
-  // 發送下一題倒計時，包含題目數據
-  broadcast({
-    type: 'next_question_countdown',
-    countdown: config.game.nextQuestionCountdown,
-    questionIndex: nextIndex,
-    question: nextQuestion,
-    totalQuestions: questions.length
-  });
-
-  // 向管理員發送下一題倒計時
-  broadcastToAdmins({
-    type: 'admin_next_question_countdown',
-    countdown: config.game.nextQuestionCountdown
-  });
-
-  // 配置秒數後開始下一題
-  setTimeout(() => {
-    startQuestion(nextIndex);
-  }, config.game.nextQuestionCountdown * 1000);
+  // 使用統一的題目倒計時函數
+  showQuestionCountdown(nextIndex);
 }
 
 // 處理顯示結果
