@@ -620,15 +620,27 @@ header h1 {
 
 /* 響應式設計 */
 @media (max-width: 768px) {
+    body {
+        padding: 10px;
+        font-size: 16px;
+    }
+
     #records-container {
         grid-template-columns: 1fr;
     }
+
+    header {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
     header h1 {
         font-size: 1.8em;
     }
 
     .game-info-grid {
         grid-template-columns: 1fr;
+        font-size: 1em;
     }
 
     .stats-grid {
@@ -639,26 +651,188 @@ header h1 {
         grid-template-columns: 1fr;
     }
 
+    /* 排行榜手機優化 */
+    .leaderboard-section {
+        padding: 20px;
+        overflow-x: auto;
+    }
+
     #leaderboard-table {
-        font-size: 1em;
+        font-size: 0.85em;
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    #leaderboard-table thead,
+    #leaderboard-table tbody,
+    #leaderboard-table tr {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
     }
 
     #leaderboard-table th,
     #leaderboard-table td {
-        padding: 12px 8px;
+        padding: 10px 5px;
+        font-size: 0.9em;
+    }
+
+    /* 隱藏較不重要的欄位以節省空間 */
+    #leaderboard-table th:nth-child(4),
+    #leaderboard-table td:nth-child(4),
+    #leaderboard-table th:nth-child(6),
+    #leaderboard-table td:nth-child(6) {
+        display: none;
+    }
+
+    /* 彈出視窗手機優化 */
+    .modal {
+        padding: 0;
     }
 
     .modal-content {
-        width: 95%;
-        padding: 20px;
-        margin: 10% auto;
+        width: 100%;
+        max-width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        margin: 0;
+        padding: 15px;
+        border-radius: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
+    .modal-content h2 {
+        font-size: 1.3em;
+        margin-bottom: 15px;
+        padding-right: 40px;
+    }
+
+    .modal-content h3 {
+        font-size: 1.1em;
+        margin: 20px 0 10px 0;
+    }
+
+    .close {
+        font-size: 32px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: white;
+        padding: 5px;
+        margin: -10px -10px 10px auto;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    /* 玩家詳情手機優化 */
     .player-summary {
         grid-template-columns: 1fr;
+        gap: 10px;
+        font-size: 0.95em;
+    }
+
+    .summary-item {
+        padding: 12px;
+    }
+
+    .answers-timeline {
+        gap: 10px;
+    }
+
+    .answer-item {
+        padding: 12px;
+        font-size: 0.9em;
+    }
+
+    .answer-header {
+        gap: 8px;
+        font-size: 0.85em;
+    }
+
+    .answer-status {
+        font-size: 1.2em;
+    }
+
+    .answer-time,
+    .answer-score {
+        padding: 3px 8px;
+        font-size: 0.85em;
+    }
+
+    /* 題目詳情手機優化 */
+    .question-text-large {
+        font-size: 1.1em;
+        padding: 15px;
     }
 
     .question-stats-summary {
         grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .stat-box {
+        padding: 15px;
+    }
+
+    .stat-value-large {
+        font-size: 1.5em;
+    }
+
+    .options-distribution {
+        gap: 10px;
+    }
+
+    .option-bar {
+        padding: 12px;
+    }
+
+    .option-label {
+        font-size: 1em;
+        margin-bottom: 8px;
+    }
+
+    .option-count {
+        min-width: 80px;
+        font-size: 0.9em;
+    }
+
+    /* 玩家表現表格手機優化 */
+    .players-performance {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .players-performance table {
+        font-size: 0.85em;
+        min-width: 500px;
+    }
+
+    .players-performance th,
+    .players-performance td {
+        padding: 8px 5px;
+        font-size: 0.9em;
+    }
+
+    /* 題目分析區塊優化 */
+    .questions-section {
+        padding: 20px;
+    }
+
+    .question-card {
+        padding: 15px;
+    }
+
+    .question-text {
+        font-size: 1em;
+    }
+
+    .stat-item {
+        font-size: 0.95em;
     }
 }
