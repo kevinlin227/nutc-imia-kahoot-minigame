@@ -148,6 +148,50 @@
             display: block;
         }
 
+        .current-question-display {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .current-question-display.active {
+            display: block;
+        }
+
+        .current-question-display h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .current-question-text {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .current-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .current-option {
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            color: white;
+            text-align: center;
+        }
+
+        .current-option.option-a { background: #e74c3c; }
+        .current-option.option-b { background: #3498db; }
+        .current-option.option-c { background: #f39c12; }
+        .current-option.option-d { background: #27ae60; }
+
         .game-finished-banner {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -462,6 +506,12 @@
                     <div id="nextQuestionCountdown" class="countdown-display">
                         下一題倒計時: <span id="nextQuestionCountdownValue">3</span>
                     </div>
+                    <!-- 當前題目顯示 -->
+                    <div id="currentQuestionDisplay" class="current-question-display">
+                        <h3>當前題目</h3>
+                        <div id="currentQuestionText" class="current-question-text"></div>
+                        <div id="currentOptions" class="current-options"></div>
+                    </div>
                 </div>
 
                 <!-- 作答統計 -->
@@ -560,7 +610,13 @@
                 questionTimeLimit: 10000 // 預設值
             },
             // 遊戲ID (用於數據分析)
-            gameId: null
+            gameId: null,
+            // 倒計時控制
+            countdownIntervals: {
+                game: null,
+                question: null,
+                nextQuestion: null
+            }
         };
 
         // WebSocket連接
@@ -722,6 +778,8 @@
             const timeLimitSeconds = message.timeLimit ? Math.floor(message.timeLimit / 1000) : 10;
             showQuestionCountdown(timeLimitSeconds, false);
             resetAnswerStats();
+            // 顯示當前題目和選項
+            showCurrentQuestion(message.question);
             addLog(`第 ${message.questionIndex + 1} 題: ${message.question.question} (${timeLimitSeconds}秒)`, 'info');
         }
 
@@ -748,10 +806,16 @@
             countdown.classList.add('active');
             valueElement.textContent = seconds;
 
-            const interval = setInterval(() => {
+            // 清除舊的倒計時
+            if (adminState.countdownIntervals.game) {
+                clearInterval(adminState.countdownIntervals.game);
+            }
+
+            adminState.countdownIntervals.game = setInterval(() => {
                 seconds--;
                 if (seconds <= 0) {
-                    clearInterval(interval);
+                    clearInterval(adminState.countdownIntervals.game);
+                    adminState.countdownIntervals.game = null;
                     countdown.classList.remove('active');
                 } else {
                     valueElement.textContent = seconds;
@@ -769,11 +833,17 @@
             valueElement.textContent = seconds;
 
             if (!useServerTime) {
+                // 清除舊的倒計時
+                if (adminState.countdownIntervals.question) {
+                    clearInterval(adminState.countdownIntervals.question);
+                }
+
                 // 啟動本地倒計時
-                const interval = setInterval(() => {
+                adminState.countdownIntervals.question = setInterval(() => {
                     seconds--;
                     if (seconds <= 0) {
-                        clearInterval(interval);
+                        clearInterval(adminState.countdownIntervals.question);
+                        adminState.countdownIntervals.question = null;
                         valueElement.textContent = '時間到!';
                         valueElement.style.color = '#dc3545';
                         setTimeout(() => {
@@ -805,10 +875,16 @@
             // 確保下一題按鈕在倒數期間保持禁用
             nextQuestionBtn.disabled = true;
 
-            const interval = setInterval(() => {
+            // 清除舊的倒計時
+            if (adminState.countdownIntervals.nextQuestion) {
+                clearInterval(adminState.countdownIntervals.nextQuestion);
+            }
+
+            adminState.countdownIntervals.nextQuestion = setInterval(() => {
                 seconds--;
                 if (seconds <= 0) {
-                    clearInterval(interval);
+                    clearInterval(adminState.countdownIntervals.nextQuestion);
+                    adminState.countdownIntervals.nextQuestion = null;
                     countdown.classList.remove('active');
                     // 倒數結束後，根據遊戲狀態更新按鈕狀態
                     updateControlButtons();
@@ -820,9 +896,50 @@
 
         // 隱藏所有倒計時
         function hideAllCountdowns() {
+            // 清除所有倒計時 interval
+            if (adminState.countdownIntervals.game) {
+                clearInterval(adminState.countdownIntervals.game);
+                adminState.countdownIntervals.game = null;
+            }
+            if (adminState.countdownIntervals.question) {
+                clearInterval(adminState.countdownIntervals.question);
+                adminState.countdownIntervals.question = null;
+            }
+            if (adminState.countdownIntervals.nextQuestion) {
+                clearInterval(adminState.countdownIntervals.nextQuestion);
+                adminState.countdownIntervals.nextQuestion = null;
+            }
+
+            // 隱藏所有倒計時顯示
             document.getElementById('gameCountdown').classList.remove('active');
             document.getElementById('questionCountdown').classList.remove('active');
             document.getElementById('nextQuestionCountdown').classList.remove('active');
+            document.getElementById('currentQuestionDisplay').classList.remove('active');
+        }
+
+        // 顯示當前題目
+        function showCurrentQuestion(question) {
+            const display = document.getElementById('currentQuestionDisplay');
+            const textElement = document.getElementById('currentQuestionText');
+            const optionsElement = document.getElementById('currentOptions');
+
+            // 設置題目文字
+            textElement.textContent = question.question;
+
+            // 設置選項
+            const optionLabels = ['A', 'B', 'C', 'D'];
+            const optionClasses = ['option-a', 'option-b', 'option-c', 'option-d'];
+            optionsElement.innerHTML = '';
+
+            question.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = `current-option ${optionClasses[index]}`;
+                optionDiv.textContent = `${optionLabels[index]}: ${option}`;
+                optionsElement.appendChild(optionDiv);
+            });
+
+            // 顯示題目區域
+            display.classList.add('active');
         }
 
         // 顯示遊戲結束橫幅
