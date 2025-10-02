@@ -788,6 +788,11 @@
         function handleAdminNextQuestionCountdown(message) {
             hideAllCountdowns();
             showNextQuestionCountdown(message.countdown);
+            // 在倒計時期間顯示題目
+            if (message.question) {
+                showCurrentQuestion(message.question);
+                addLog(`準備第 ${message.questionIndex + 1} 題: ${message.question.question}`, 'info');
+            }
             // 確保倒數期間下一題按鈕保持禁用
             document.getElementById('nextQuestionBtn').disabled = true;
         }

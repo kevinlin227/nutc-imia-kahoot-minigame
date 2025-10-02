@@ -753,10 +753,12 @@ function showQuestionCountdown(questionIndex) {
     totalQuestions: questions.length
   });
 
-  // 向管理員發送題目倒計時
+  // 向管理員發送題目倒計時（包含完整題目數據，含答案）
   broadcastToAdmins({
     type: 'admin_next_question_countdown',
-    countdown: config.game.nextQuestionCountdown
+    countdown: config.game.nextQuestionCountdown,
+    questionIndex: questionIndex,
+    question: questions[questionIndex]  // 管理員可以看到完整題目（包含答案）
   });
 
   // 倒計時結束後開始題目作答
