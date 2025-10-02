@@ -1,107 +1,302 @@
 [
   {
     "question": "臺中科大「資訊管理系」屬於哪一個學院？",
-    "options": ["商學院", "設計學院", "資訊與流通學院", "智慧產業學院"],
+    "options": [
+      "商學院",
+      "設計學院",
+      "資訊與流通學院",
+      "智慧產業學院"
+    ],
     "correctAnswer": 2
   },
   {
     "question": "下列哪一項最不可能出現在資管課程裡？",
-    "options": ["ERP", "CRM", "SCM", "KFC"],
+    "options": [
+      "ERP",
+      "CRM",
+      "SCM",
+      "KFC"
+    ],
     "correctAnswer": 3
   },
   {
     "question": "資管系的「資」指的是什麼？",
-    "options": ["資訊", "資金", "資優", "資敵（資深敵人？）"],
+    "options": [
+      "資訊",
+      "資金",
+      "資優",
+      "資敵（資深敵人？）"
+    ],
     "correctAnswer": 0
   },
   {
     "question": "台灣最近加強保護什麼重要設施？",
-    "options": ["海底電纜", "海底寶藏", "海底餐廳", "海底總動員"],
+    "options": [
+      "海底電纜",
+      "海底寶藏",
+      "海底餐廳",
+      "海底總動員"
+    ],
     "correctAnswer": 0
   },
   {
     "question": "TSMC(台積電) 最近發生什麼事？",
-    "options": ["機密差點被偷走", "晶片變成餅乾", "老闆去開演唱會", "工廠變遊樂園"],
+    "options": [
+      "機密差點被偷走",
+      "晶片變成餅乾",
+      "老闆去開演唱會",
+      "工廠變遊樂園"
+    ],
     "correctAnswer": 0
   },
   {
     "question": "照片拍的越多，什麼東西會不夠用？",
-    "options": ["硬碟空間", "教室桌椅", "飯堂餐盒", "新生制服"],
+    "options": [
+      "硬碟空間",
+      "教室桌椅",
+      "飯堂餐盒",
+      "新生制服"
+    ],
     "correctAnswer": 0
   },
   {
     "question": "「晶片外交」是什麼意思？",
-    "options": ["用晶片交朋友", "用晶片打遊戲", "晶片做成飾品", "晶片當早餐"],
+    "options": [
+      "用晶片交朋友",
+      "用晶片打遊戲",
+      "晶片做成飾品",
+      "晶片當早餐"
+    ],
     "correctAnswer": 0
   },
   {
     "question": "資管系主任的名字是？",
-    "options": ["范冰冰", "姜琇森", "王建民", "周杰倫"],
+    "options": [
+      "范冰冰",
+      "姜琇森",
+      "王建民",
+      "周杰倫"
+    ],
     "correctAnswer": 1
   },
   {
     "question": "如果有人問「資管到底在學什麼？」最正確的答案是？",
-    "options": ["電腦相關啦", "打 LOL", "打麻將", "打瞌睡"],
+    "options": [
+      "電腦相關啦",
+      "打 LOL",
+      "打麻將",
+      "打瞌睡"
+    ],
     "correctAnswer": 0
   },
   {
     "question": "「資應二甲」的資應應該是什麼意思？",
-    "options": ["資源回收應用班", "資訊應用菁英班", "資深應援班", "自願應召班"],
+    "options": [
+      "資源回收應用班",
+      "資訊應用菁英班",
+      "資深應援班",
+      "自願應召班"
+    ],
     "correctAnswer": 1
   },
   {
     "question": "「資管二甲」的資管應該是什麼意思？",
-    "options": ["資訊管理系", "資深水管系", "多利多資管飽系", "資工切水管系"],
+    "options": [
+      "資訊管理系",
+      "資深水管系",
+      "多利多資管飽系",
+      "資工切水管系"
+    ],
     "correctAnswer": 0
   },
   {
     "question": "中科大距離台北101最近的一棟樓是哪一棟?",
-    "options": ["中商大樓", "中正大樓", "昌明樓", "奇秀樓"],
+    "options": [
+      "中商大樓",
+      "中正大樓",
+      "昌明樓",
+      "奇秀樓"
+    ],
     "correctAnswer": 3
   },
   {
     "question": "中科大附近沒有以下哪個飲料店?",
-    "options": ["茶湯會", "得正", "50嵐", "拾汣茶屋"],
+    "options": [
+      "茶湯會",
+      "得正",
+      "50嵐",
+      "拾汣茶屋"
+    ],
     "correctAnswer": 0
   },
   {
     "question": "校歌中提到哪一座山？",
-    "options": ["阿里山", "玉山", "雪山", "合歡山"],
+    "options": [
+      "阿里山",
+      "玉山",
+      "雪山",
+      "合歡山"
+    ],
     "correctAnswer": 1
   },
   {
     "question": "台中科技大學的創校年份是？",
-    "options": ["1919", "1929", "1945", "1959"],
+    "options": [
+      "1919",
+      "1929",
+      "1945",
+      "1959"
+    ],
     "correctAnswer": 0
   },
   {
     "question": "中科大最早的校名是什麼？",
-    "options": ["台中商業職業學校", "台中商業專科學校", "台中高等工業學校", "台中市立商專"],
+    "options": [
+      "台中商業職業學校",
+      "台中商業專科學校",
+      "台中高等工業學校",
+      "台中市立商專"
+    ],
     "correctAnswer": 1
   },
   {
     "question": "中科大校徽中央的圖案，其實是什麼字的變形？",
-    "options": ["「中」", "「科」", "「大」", "「商」"],
+    "options": [
+      "「中」",
+      "「科」",
+      "「大」",
+      "「商」"
+    ],
     "correctAnswer": 0
   },
   {
     "question": "三民校區原本主要是哪個科系在使用？",
-    "options": ["工程學院", "醫護學院", "設計學院", "商學院"],
+    "options": [
+      "工程學院",
+      "醫護學院",
+      "設計學院",
+      "商學院"
+    ],
     "correctAnswer": 1
   },
   {
     "question": "中科大的英文全名是？",
-    "options": ["National Taichung University of Science and Technology", "National Taichung Technical College", "Taichung University of Commerce and Technology", "National Central University of Science and Technology"],
+    "options": [
+      "National Taichung University of Science and Technology",
+      "National Taichung Technical College",
+      "Taichung University of Commerce and Technology",
+      "National Central University of Science and Technology"
+    ],
     "correctAnswer": 0
   },
   {
     "question": "科大的英文縮寫是？",
-    "options": ["NTCUST", "TUST", "NTCU", "NTUST"],
+    "options": [
+      "NTCUST",
+      "TUST",
+      "NTCU",
+      "NTUST"
+    ],
     "correctAnswer": 0
   },
   {
     "question": "中科大的哪一棟樓沒有電梯？",
-    "options": ["奇秀樓", "中正大樓", "資訊樓", "學生活動中心"],
+    "options": [
+      "奇秀樓",
+      "中正大樓",
+      "資訊樓",
+      "學生活動中心"
+    ],
     "correctAnswer": 0
+  },
+  {
+    "question": "離中科大最近的高中是?",
+    "options": [
+      "西風騎士團",
+      "東京迪士尼",
+      "台中一中",
+      "調查兵團"
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "question": "離中科大最近的國小是?",
+    "options": [
+      "中路防禦塔",
+      "太平國小",
+      "雙塔迷城",
+      "草叢迷蹤"
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "question": "如果你看到螢幕上出現「404 Not Found」，意思是?",
+    "options": [
+      "網站在打電動",
+      "你數學考試分數",
+      "你不許玩星穹鐵道",
+      "網頁不存在"
+    ],
+    "correctAnswer": 3
+  },
+  {
+    "question": "以下哪一個不是電腦零組件？",
+    "options": [
+      "主機板",
+      "天使雞排",
+      "顯示卡",
+      "記憶體"
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "question": "電腦「中毒」最常見的症狀是？",
+    "options": [
+      "打噴嚏",
+      "跑很慢",
+      "開始唱歌",
+      "螢幕長青春痘"
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "question": "Visual Basic 中 Label1.Text = \"Hello World\" 會將標籤文字改成甚麼?",
+    "options": [
+      "誰還有多餘資金",
+      "還敢下來阿冰鳥",
+      "Hello World",
+      "龜一點，別太衝"
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "question": "下列哪一個是中科大的校長?",
+    "options": [
+      "陳同孝",
+      "珂樂芙",
+      "蕾潔",
+      "成都超人"
+    ],
+    "correctAnswer": 0
+  },
+  {
+    "question": "下列哪一個是資管一甲班導，資應一甲的數學老師?",
+    "options": [
+      "卡芙卡",
+      "胡桃",
+      "劉祐呈",
+      "曾建維"
+    ],
+    "correctAnswer": 3
+  },
+  {
+    "question": "這個中科冷知識大挑戰是誰做的?",
+    "options": [
+      "許哲豪(主持人+麻將社社長)",
+      "林書霆(全國技能競賽55屆青少年網頁設計金牌)",
+      "趙翊傑(主持人)",
+      "黃柏橙(攝影)"
+    ],
+    "correctAnswer": 1
   }
 ]
