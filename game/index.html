@@ -400,21 +400,68 @@
             console.log('切換到遊戲畫面');
             switchScreen('game');
 
-            // 如果消息中包含題目數據，直接使用它
-            if (message.question) {
-                console.log('使用消息中的題目數據:', message.question);
-                loadQuestionFromData(message.questionIndex, message.question);
-            } else {
-                // 否則從gameState.questions中載入
-                console.log('從gameState載入題目:', message.questionIndex);
-                loadQuestion(message.questionIndex);
+            // 獲取題目數據
+            const question = message.question || gameState.questions[message.questionIndex];
+
+            // 先載入題目文字和題號，但不載入選項
+            if (question) {
+                document.getElementById('questionCounter').textContent =
+                    `第 ${message.questionIndex + 1} 題 / 共 ${gameState.totalQuestions} 題`;
+                document.getElementById('questionText').textContent = question.question;
+                document.getElementById('optionsContainer').innerHTML = ''; // 清空選項
+                document.getElementById('answerIndicator').textContent = '';
             }
 
-            // 使用客戶端計時器，從消息、題目數據或配置中獲取時間限制（毫秒轉秒）
-            const timeLimit = message.question?.timeLimit || gameState.questions[message.questionIndex]?.timeLimit || gameState.config.questionTimeLimit || 10000;
-            const timeLimitSeconds = Math.floor(timeLimit / 1000);
-            console.log('開始計時器，時間限制:', timeLimitSeconds, '秒');
-            startQuestionTimer(timeLimitSeconds);
+            // 顯示準備倒計時
+            const timerElement = document.getElementById('gameTimer');
+            timerElement.textContent = '準備中...';
+            timerElement.style.color = '#667eea';
+            timerElement.style.animation = '';
+
+            // 開始3秒準備倒計時
+            let countdown = 3;
+            timerElement.textContent = countdown;
+
+            const prepTimer = setInterval(() => {
+                countdown--;
+                if (countdown <= 0) {
+                    clearInterval(prepTimer);
+                    // 倒計時結束，載入選項並開始作答計時
+                    if (message.question) {
+                        loadQuestionOptions(message.questionIndex, message.question);
+                    } else {
+                        loadQuestionOptions(message.questionIndex, gameState.questions[message.questionIndex]);
+                    }
+
+                    // 開始作答計時
+                    const timeLimit = message.question?.timeLimit || gameState.questions[message.questionIndex]?.timeLimit || gameState.config.questionTimeLimit || 10000;
+                    const timeLimitSeconds = Math.floor(timeLimit / 1000);
+                    console.log('開始計時器，時間限制:', timeLimitSeconds, '秒');
+                    startQuestionTimer(timeLimitSeconds);
+                } else {
+                    timerElement.textContent = countdown;
+                }
+            }, 1000);
+
+            gameState.localTimers.push(prepTimer);
+        }
+
+        // 載入題目選項
+        function loadQuestionOptions(questionIndex, questionData) {
+            console.log('載入題目選項:', questionIndex, questionData);
+
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            questionData.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => selectAnswer(index));
+                optionsContainer.appendChild(optionElement);
+            });
+
+            console.log('選項載入完成');
         }
 
         // 載入題目
