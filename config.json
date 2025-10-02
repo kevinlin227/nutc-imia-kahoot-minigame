@@ -2,7 +2,7 @@
   "game": {
     "name": "中科冷知識大挑戰",
     "startCountdown": 3,
-    "nextQuestionCountdown": 3,
+    "nextQuestionCountdown": 5,
     "questionTimeLimit": 20000
   },
   "ui": {
