@@ -9,6 +9,7 @@ body {
     background: linear-gradient(135deg, #5fd8d6 0%, #5cb8e3 100%);
     min-height: 100vh;
     padding: 20px;
+    font-size: 18px;
 }
 
 .container {
@@ -35,6 +36,7 @@ header h1 {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 15px;
     color: #555;
+    font-size: 1.1em;
 }
 
 .dashboard {
@@ -76,7 +78,7 @@ header h1 {
 }
 
 .stat-label {
-    font-size: 0.9em;
+    font-size: 1.1em;
     opacity: 0.9;
     margin-bottom: 10px;
 }
@@ -101,7 +103,7 @@ header h1 {
 
 .hint {
     color: #888;
-    font-size: 0.9em;
+    font-size: 1.1em;
     margin-bottom: 20px;
 }
 
@@ -118,11 +120,13 @@ header h1 {
 #leaderboard-table th {
     padding: 15px;
     text-align: left;
+    font-size: 1.1em;
 }
 
 #leaderboard-table td {
     padding: 15px;
     border-bottom: 1px solid #eee;
+    font-size: 1.05em;
 }
 
 .player-row {
@@ -191,12 +195,13 @@ header h1 {
 .question-number {
     font-weight: bold;
     color: #667eea;
+    font-size: 1.1em;
 }
 
 .difficulty-badge {
     padding: 5px 15px;
     border-radius: 20px;
-    font-size: 0.85em;
+    font-size: 1em;
     font-weight: bold;
 }
 
@@ -218,7 +223,8 @@ header h1 {
 .question-text {
     color: #333;
     margin-bottom: 15px;
-    line-height: 1.5;
+    line-height: 1.6;
+    font-size: 1.1em;
 }
 
 .question-stats {
@@ -231,7 +237,7 @@ header h1 {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.9em;
+    font-size: 1.05em;
     color: #666;
 }
 
@@ -362,32 +368,34 @@ header h1 {
 .answer-question-num {
     font-weight: bold;
     color: #667eea;
+    font-size: 1.05em;
 }
 
 .answer-time {
     background: #667eea;
     color: white;
-    padding: 3px 10px;
+    padding: 4px 12px;
     border-radius: 15px;
-    font-size: 0.85em;
+    font-size: 0.95em;
 }
 
 .answer-score {
     background: #4caf50;
     color: white;
-    padding: 3px 10px;
+    padding: 4px 12px;
     border-radius: 15px;
-    font-size: 0.85em;
+    font-size: 0.95em;
     font-weight: bold;
 }
 
 .answer-question {
     color: #555;
     margin-bottom: 10px;
+    font-size: 1.05em;
 }
 
 .answer-options {
-    font-size: 0.9em;
+    font-size: 1em;
     color: #666;
 }
 
@@ -401,12 +409,13 @@ header h1 {
 }
 
 .question-text-large {
-    font-size: 1.3em;
+    font-size: 1.5em;
     color: #333;
     margin-bottom: 20px;
     padding: 20px;
     background: #f9f9f9;
     border-radius: 10px;
+    line-height: 1.6;
 }
 
 .question-stats-summary {
@@ -424,7 +433,7 @@ header h1 {
 }
 
 .stat-label {
-    font-size: 0.9em;
+    font-size: 1em;
     opacity: 0.9;
     margin-bottom: 5px;
 }
@@ -457,6 +466,7 @@ header h1 {
     font-weight: bold;
     margin-bottom: 10px;
     color: #333;
+    font-size: 1.1em;
 }
 
 .option-stats {
@@ -486,8 +496,9 @@ header h1 {
 .option-count {
     font-weight: bold;
     color: #667eea;
-    min-width: 100px;
+    min-width: 120px;
     text-align: right;
+    font-size: 1.05em;
 }
 
 .players-performance table {
@@ -504,11 +515,13 @@ header h1 {
 .players-performance th {
     padding: 12px;
     text-align: left;
+    font-size: 1.1em;
 }
 
 .players-performance td {
     padding: 12px;
     border-bottom: 1px solid #eee;
+    font-size: 1.05em;
 }
 
 .correct-row {
@@ -562,7 +575,7 @@ header h1 {
 }
 
 .record-date {
-    font-size: 0.85em;
+    font-size: 1em;
     color: #666;
     white-space: nowrap;
     margin-left: 10px;
@@ -579,7 +592,7 @@ header h1 {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.95em;
+    font-size: 1.1em;
     color: #555;
 }
 
@@ -592,11 +605,12 @@ header h1 {
     background: linear-gradient(135deg, #5fd8d6 0%, #5cb8e3 100%);
     color: white;
     border: none;
-    padding: 12px 20px;
+    padding: 14px 20px;
     border-radius: 8px;
-    font-size: 1em;
+    font-size: 1.1em;
     cursor: pointer;
     transition: all 0.3s;
+    font-weight: 600;
 }
 
 .view-analytics-btn:hover {
@@ -626,12 +640,12 @@ header h1 {
     }
 
     #leaderboard-table {
-        font-size: 0.9em;
+        font-size: 1em;
     }
 
     #leaderboard-table th,
     #leaderboard-table td {
-        padding: 10px 5px;
+        padding: 12px 8px;
     }
 
     .modal-content {

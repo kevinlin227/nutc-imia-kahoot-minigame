@@ -9,7 +9,8 @@
       "Bash(findstr:*)",
       "Bash(wmic process where:*)",
       "Bash(npm start)",
-      "Bash(dir)"
+      "Bash(dir)",
+      "Bash(dir \"C:\\Users\\user\\Downloads\\nutc-imia-kahoot-minigame\\game-records\")"
     ],
     "deny": [],
     "ask": []
