@@ -59,6 +59,8 @@ kahoot/
 ```bash
 git clone https://github.com/kevinlin227/nutc-imia-kahoot-minigame
 
+cd nutc-imia-kahoot-minigame
+
 npm install
 
 npm start
